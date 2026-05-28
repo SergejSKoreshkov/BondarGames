@@ -24,12 +24,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Email already registered" }, { status: 409 });
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
-  const role = adminEmail && email.toLowerCase() === adminEmail ? "ADMIN" : "USER";
-
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
-    data: { name, email, passwordHash, role },
+    data: { name, email, passwordHash, role: "USER" },
   });
 
   const token = await createVerificationToken(user.id);

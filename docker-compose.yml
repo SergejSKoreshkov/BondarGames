@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: bondargames-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bondar
+      POSTGRES_PASSWORD: bondar
+      POSTGRES_DB: bondargames
+    ports:
+      - "5432:5432"
+    volumes:
+      - bondargames-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bondar -d bondargames"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  bondargames-db:

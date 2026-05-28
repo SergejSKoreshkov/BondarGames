@@ -14,10 +14,17 @@ export default async function VerifyPage({
   if (token) {
     const record = await prisma.verificationToken.findUnique({ where: { token } });
     if (record && record.expiresAt > new Date()) {
+      const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+      const userRow = await prisma.user.findUnique({ where: { id: record.userId } });
+      const promoteToAdmin =
+        !!adminEmail && !!userRow && userRow.email.toLowerCase() === adminEmail;
       await prisma.$transaction([
         prisma.user.update({
           where: { id: record.userId },
-          data: { emailVerified: new Date() },
+          data: {
+            emailVerified: new Date(),
+            ...(promoteToAdmin ? { role: "ADMIN" as const } : {}),
+          },
         }),
         prisma.verificationToken.delete({ where: { id: record.id } }),
       ]);

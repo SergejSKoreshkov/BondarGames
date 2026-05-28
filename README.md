@@ -16,14 +16,16 @@ Public visitors can see the schedule. Registered & email-verified users can book
 
 ```bash
 npm install
-cp .env.example .env  # then fill in values
-# Provision a Postgres database (Neon) and paste DATABASE_URL / DIRECT_URL into .env
-npm run db:migrate    # apply the schema
-npm run db:seed       # optional — creates an admin from ADMIN_EMAIL/ADMIN_PASSWORD + a sample event
+cp .env.example .env       # then fill in non-DB values (Auth, Google, SMTP, ADMIN_EMAIL)
+npm run db:up              # start local Postgres in Docker
+npm run db:migrate         # apply the schema
+npm run db:seed            # optional — creates an admin (ADMIN_EMAIL/ADMIN_PASSWORD) + a sample event
 npm run dev
 ```
 
 Open http://localhost:3000.
+
+The default `.env.example` is pre-wired for the Docker container — `postgresql://bondar:bondar@localhost:5432/bondargames`. Stop the DB with `npm run db:down`, wipe it with `npm run db:reset`.
 
 ## Required environment variables
 
