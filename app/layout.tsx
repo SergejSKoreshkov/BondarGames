@@ -26,8 +26,10 @@ export default async function RootLayout({
         <LiquidFilters />
         <SessionProvider session={session}>
           <Header />
-          <main className="flex-1 mx-auto w-full max-w-5xl px-5 sm:px-8 py-8 sm:py-12">{children}</main>
-          <footer className="mx-auto w-full max-w-5xl px-5 sm:px-8 py-10 text-xs text-[var(--muted)]">
+          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-8 pt-24 sm:pt-28 pb-12">
+            {children}
+          </main>
+          <footer className="mx-auto w-full max-w-5xl px-4 sm:px-8 py-10 text-xs text-[var(--muted)]">
             © {new Date().getFullYear()} BondarGames
           </footer>
         </SessionProvider>

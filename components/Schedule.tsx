@@ -28,6 +28,13 @@ export type ScheduleEvent = {
 
 const HOUR_HEIGHT = 28; // px per hour; 24 * 28 = 672px total grid
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
+/**
+ * Schedule columns: 48 px hour-label column + 7 day columns.
+ * Day columns have a min width of 96 px — on mobile the grid overflows its
+ * container and the parent `overflow-x-auto` makes it horizontally swipable;
+ * on desktop the 1fr lets columns expand to fill the available width.
+ */
+const GRID_COLS = "48px repeat(7, minmax(96px, 1fr))";
 
 function fmtTime(d: Date) {
   return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(d);
@@ -114,80 +121,82 @@ export function Schedule({
         </div>
       </div>
 
-      {/* Week grid */}
+      {/* Week grid — horizontal scroll on narrow screens. */}
       <div className="schedule-surface rounded-3xl overflow-hidden">
-        {/* Day headers */}
-        <div
-          className="grid border-b border-white/50 text-xs bg-white/30"
-          style={{ gridTemplateColumns: "48px repeat(7, minmax(0, 1fr))" }}
-        >
-          <div />
-          {days.map((d) => {
-            const isToday = sameDay(d, today);
-            return (
-              <div
-                key={d.toISOString()}
-                className={`px-1 py-2 text-center ${
-                  isToday ? "text-[var(--foreground)]" : "text-[var(--muted)]"
-                }`}
-              >
-                <div className="uppercase tracking-wide text-[10px] sm:text-xs">
-                  {new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(d)}
-                </div>
+        <div className="overflow-x-auto">
+          {/* Day headers */}
+          <div
+            className="grid border-b border-white/50 text-xs bg-white/30"
+            style={{ gridTemplateColumns: GRID_COLS }}
+          >
+            <div className="sticky left-0 z-20 bg-white/85 backdrop-blur-md border-r border-white/50" />
+            {days.map((d) => {
+              const isToday = sameDay(d, today);
+              return (
                 <div
-                  className={`text-sm font-semibold leading-tight ${
-                    isToday
-                      ? "inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white mt-0.5 shadow-[0_3px_8px_-2px_rgba(67,56,202,0.4)]"
-                      : ""
+                  key={d.toISOString()}
+                  className={`px-1 py-2 text-center ${
+                    isToday ? "text-[var(--foreground)]" : "text-[var(--muted)]"
                   }`}
                 >
-                  {d.getDate()}
+                  <div className="uppercase tracking-wide text-[10px] sm:text-xs">
+                    {new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(d)}
+                  </div>
+                  <div
+                    className={`text-sm font-semibold leading-tight ${
+                      isToday
+                        ? "inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white mt-0.5 shadow-[0_3px_8px_-2px_rgba(67,56,202,0.4)]"
+                        : ""
+                    }`}
+                  >
+                    {d.getDate()}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Body: hours column + 7 day columns */}
-        <div
-          className="grid relative"
-          style={{
-            gridTemplateColumns: "48px repeat(7, minmax(0, 1fr))",
-            height: HOUR_HEIGHT * 24,
-          }}
-        >
-          {/* Time column */}
-          <div className="relative border-r border-white/50">
-            {HOURS.map((h) => (
-              <div
-                key={h}
-                className="absolute left-0 right-0 text-[10px] text-[var(--muted)] font-mono pr-2 text-right select-none"
-                style={{ top: h * HOUR_HEIGHT - 6 }}
-              >
-                {fmtHourLabel(h)}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Day columns */}
-          {days.map((d, dayIdx) => (
-            <DayColumn
-              key={d.toISOString()}
-              day={d}
-              events={eventsThisWeek.filter((e) => sameDay(new Date(e.startsAt), d))}
-              onEventClick={setActive}
-              onEmptyClick={(hour) => {
-                if (!(canBook && emailVerified)) return;
-                const from = new Date(d);
-                from.setHours(hour, 0, 0, 0);
-                if (from.getTime() < Date.now()) return;
-                openCreate(from);
-              }}
-              isLast={dayIdx === 6}
-            />
-          ))}
+          {/* Body: hours column + 7 day columns */}
+          <div
+            className="grid relative"
+            style={{
+              gridTemplateColumns: GRID_COLS,
+              height: HOUR_HEIGHT * 24,
+            }}
+          >
+            {/* Time column — sticky left so it remains visible while swiping. */}
+            <div className="sticky left-0 z-20 bg-white/85 backdrop-blur-md border-r border-white/50">
+              {HOURS.map((h) => (
+                <div
+                  key={h}
+                  className="absolute left-0 right-0 text-[10px] text-[var(--muted)] font-mono pr-2 text-right select-none"
+                  style={{ top: h * HOUR_HEIGHT - 6 }}
+                >
+                  {fmtHourLabel(h)}
+                </div>
+              ))}
+            </div>
 
-          <NowLine days={days} />
+            {/* Day columns */}
+            {days.map((d, dayIdx) => (
+              <DayColumn
+                key={d.toISOString()}
+                day={d}
+                events={eventsThisWeek.filter((e) => sameDay(new Date(e.startsAt), d))}
+                onEventClick={setActive}
+                onEmptyClick={(hour) => {
+                  if (!(canBook && emailVerified)) return;
+                  const from = new Date(d);
+                  from.setHours(hour, 0, 0, 0);
+                  if (from.getTime() < Date.now()) return;
+                  openCreate(from);
+                }}
+                isLast={dayIdx === 6}
+              />
+            ))}
+
+            <NowLine days={days} />
+          </div>
         </div>
       </div>
 
