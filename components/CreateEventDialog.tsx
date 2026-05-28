@@ -18,7 +18,7 @@ export function CreateEventDialog({
 }: {
   prefillStart: Date | null;
   onClose: () => void;
-  onCreated: (shareToken: string | null) => void;
+  onCreated: (result: { shareToken: string | null; status: "PENDING" | "CONFIRMED" }) => void;
   publicPricePerPerson: number;
   privatePricePerEvent: number;
 }) {
@@ -77,8 +77,14 @@ export function CreateEventDialog({
       setError(j.error ?? "Failed to create event");
       return;
     }
-    const body = (await res.json().catch(() => ({}))) as { shareToken?: string | null };
-    onCreated(body.shareToken ?? null);
+    const body = (await res.json().catch(() => ({}))) as {
+      shareToken?: string | null;
+      status?: "PENDING" | "CONFIRMED";
+    };
+    onCreated({
+      shareToken: body.shareToken ?? null,
+      status: body.status ?? "PENDING",
+    });
     router.refresh();
   }
 

@@ -17,6 +17,7 @@ export type ScheduleEvent = {
   maxPeople: number;
   location: string | null;
   isPrivate: boolean;
+  status: "PENDING" | "CONFIRMED";
   shareToken?: string | null;
   createdBy: { id: string; name: string | null; email: string } | null;
   seatsTaken: number;
@@ -54,7 +55,10 @@ export function Schedule({
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [showCreate, setShowCreate] = useState(false);
   const [prefillFrom, setPrefillFrom] = useState<Date | null>(null);
-  const [createdShareUrl, setCreatedShareUrl] = useState<string | null>(null);
+  const [createdResult, setCreatedResult] = useState<
+    | { shareUrl: string | null; status: "PENDING" | "CONFIRMED" }
+    | null
+  >(null);
   const [active, setActive] = useState<ScheduleEvent | null>(null);
 
   const weekEnd = useMemo(() => addDays(weekStart, 7), [weekStart]);
@@ -75,8 +79,11 @@ export function Schedule({
     setShowCreate(true);
   }
 
-  function onCreated(shareToken: string | null) {
-    if (shareToken) setCreatedShareUrl(`${appUrl}/event/${shareToken}`);
+  function onCreated(result: { shareToken: string | null; status: "PENDING" | "CONFIRMED" }) {
+    setCreatedResult({
+      shareUrl: result.shareToken ? `${appUrl}/event/${result.shareToken}` : null,
+      status: result.status,
+    });
     setShowCreate(false);
   }
 
@@ -210,8 +217,12 @@ export function Schedule({
         />
       )}
 
-      {createdShareUrl && (
-        <ShareCreatedDialog url={createdShareUrl} onClose={() => setCreatedShareUrl(null)} />
+      {createdResult && (
+        <CreatedDialog
+          shareUrl={createdResult.shareUrl}
+          status={createdResult.status}
+          onClose={() => setCreatedResult(null)}
+        />
       )}
     </div>
   );
@@ -317,21 +328,22 @@ function DayColumn({
         const startMinutes = start.getHours() * 60 + start.getMinutes();
         const top = (startMinutes / 60) * HOUR_HEIGHT;
         const height = Math.max((e.durationMinutes / 60) * HOUR_HEIGHT - 2, 18);
+        const pending = e.status === "PENDING";
+        const blockClasses = pending
+          ? "bg-amber-100 text-amber-900 hover:bg-amber-200 border border-dashed border-amber-400"
+          : e.isPrivate
+            ? "bg-zinc-500/90 text-white hover:bg-zinc-500"
+            : "bg-[var(--accent)] text-white hover:opacity-90";
+        const label = pending && !e.title ? "Pending" : e.isPrivate && !e.title ? "Private" : e.title;
         return (
           <button
             type="button"
             key={e.id}
             onClick={() => onEventClick(e)}
-            className={`absolute left-0.5 right-0.5 rounded-md text-[10px] sm:text-xs text-white px-1.5 py-1 text-left overflow-hidden ${
-              e.isPrivate
-                ? "bg-zinc-500/90 hover:bg-zinc-500"
-                : "bg-[var(--accent)] hover:opacity-90"
-            }`}
+            className={`absolute left-0.5 right-0.5 rounded-md text-[10px] sm:text-xs px-1.5 py-1 text-left overflow-hidden ${blockClasses}`}
             style={{ top, height }}
           >
-            <div className="font-medium truncate leading-tight">
-              {e.isPrivate && !e.title ? "Private" : e.title}
-            </div>
+            <div className="font-medium truncate leading-tight">{label}</div>
             <div className="opacity-80 truncate leading-tight">{fmtTime(start)}</div>
           </button>
         );
@@ -393,8 +405,11 @@ function EventDetailDialog({
   const seatsLeft = event.maxPeople - event.seatsTaken;
   const isFull = seatsLeft <= 0;
   const msUntil = startsAt.getTime() - Date.now();
-  const canDelete = isAdmin || (event.isMine && msUntil >= 24 * 60 * 60 * 1000);
+  const isPending = event.status === "PENDING";
+  // Host can withdraw a pending event at any time; the 24h rule only applies to confirmed events.
+  const canDelete = isAdmin || (event.isMine && (isPending || msUntil >= 24 * 60 * 60 * 1000));
   const isPrivateLocked = event.isPrivate && !event.isMine && !isAdmin;
+  const isLockedByPending = isPending && !event.isMine && !isAdmin;
 
   async function book() {
     setBusy(true);
@@ -408,6 +423,20 @@ function EventDetailDialog({
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
       setError(j.error ?? "Booking failed");
+      return;
+    }
+    onClose();
+    router.refresh();
+  }
+
+  async function approveEvent() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/events/${event.id}/confirm`, { method: "POST" });
+    setBusy(false);
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      setError(j.error ?? "Could not confirm");
       return;
     }
     onClose();
@@ -443,10 +472,26 @@ function EventDetailDialog({
               {fmtTime(startsAt)} – {fmtTime(endsAt)}
             </div>
             <h2 className="text-lg font-semibold truncate mt-0.5">
-              {isPrivateLocked ? "Private booking" : event.title}
+              {isLockedByPending
+                ? "Pending booking"
+                : isPrivateLocked
+                  ? "Private booking"
+                  : event.title}
             </h2>
-            {!isPrivateLocked && event.gameName && (
-              <div className="text-sm text-[var(--muted)]">{event.gameName}</div>
+            <div className="flex items-center gap-1.5 mt-1">
+              {isPending && (
+                <span className="inline-flex h-5 px-2 items-center rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium uppercase tracking-wide">
+                  Pending
+                </span>
+              )}
+              {event.isPrivate && !isLockedByPending && (
+                <span className="inline-flex h-5 px-2 items-center rounded-full bg-zinc-100 text-zinc-700 text-[10px] font-medium uppercase tracking-wide">
+                  Private
+                </span>
+              )}
+            </div>
+            {!isPrivateLocked && !isLockedByPending && event.gameName && (
+              <div className="text-sm text-[var(--muted)] mt-1">{event.gameName}</div>
             )}
           </div>
           <button
@@ -459,7 +504,11 @@ function EventDetailDialog({
           </button>
         </div>
 
-        {isPrivateLocked ? (
+        {isLockedByPending ? (
+          <p className="text-sm text-[var(--muted)]">
+            This slot is being held for an event that's waiting for admin approval. It'll show up here once it's confirmed.
+          </p>
+        ) : isPrivateLocked ? (
           <p className="text-sm text-[var(--muted)]">
             This slot is reserved for a private event. The host shared an invite link with their group.
           </p>
@@ -496,6 +545,16 @@ function EventDetailDialog({
         {error && <div className="text-xs text-red-500">{error}</div>}
 
         <div className="flex items-center justify-end gap-2 pt-2 flex-wrap">
+          {isAdmin && isPending && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={approveEvent}
+              className="h-10 px-5 rounded-full bg-emerald-600 text-white text-sm font-medium disabled:opacity-50"
+            >
+              {busy ? "…" : "Approve"}
+            </button>
+          )}
           {canDelete && (
             <button
               type="button"
@@ -503,10 +562,10 @@ function EventDetailDialog({
               onClick={remove}
               className="h-10 px-4 rounded-full bg-red-50 text-red-600 text-sm font-medium disabled:opacity-50"
             >
-              Delete
+              {isAdmin && isPending ? "Reject" : "Delete"}
             </button>
           )}
-          {!isPrivateLocked && !event.bookedByMe && !isFull && canBook && emailVerified && !event.isPrivate && (
+          {!isPrivateLocked && !isLockedByPending && !isPending && !event.bookedByMe && !isFull && canBook && emailVerified && !event.isPrivate && (
             <>
               <select
                 aria-label="People"
@@ -552,11 +611,20 @@ function EventDetailDialog({
   );
 }
 
-function ShareCreatedDialog({ url, onClose }: { url: string; onClose: () => void }) {
+function CreatedDialog({
+  shareUrl,
+  status,
+  onClose,
+}: {
+  shareUrl: string | null;
+  status: "PENDING" | "CONFIRMED";
+  onClose: () => void;
+}) {
   const [copied, setCopied] = useState(false);
   async function copy() {
+    if (!shareUrl) return;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {}
@@ -570,25 +638,40 @@ function ShareCreatedDialog({ url, onClose }: { url: string; onClose: () => void
         className="bg-[var(--surface)] rounded-3xl w-full max-w-sm p-6 shadow-xl space-y-3"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold">Private event created</h2>
-        <p className="text-sm text-[var(--muted)]">
-          Share this link with people you want to invite. Only they can see details and book seats.
-        </p>
-        <div className="flex items-center gap-2">
-          <input
-            readOnly
-            value={url}
-            className="flex-1 h-10 px-3 rounded-full border border-[var(--border)] bg-white text-xs"
-            onFocus={(e) => e.currentTarget.select()}
-          />
-          <button
-            type="button"
-            onClick={copy}
-            className="h-10 px-4 rounded-full bg-[var(--accent)] text-white text-sm font-medium"
-          >
-            {copied ? "Copied" : "Copy"}
-          </button>
-        </div>
+        <h2 className="text-lg font-semibold">
+          {status === "PENDING" ? "Submitted for approval" : "Event created"}
+        </h2>
+        {status === "PENDING" ? (
+          <p className="text-sm text-[var(--muted)]">
+            Your time slot is held. Once an admin approves the event, it'll appear on the public schedule (or be ready to share, if private).
+          </p>
+        ) : (
+          <p className="text-sm text-[var(--muted)]">Your event is live on the schedule.</p>
+        )}
+        {shareUrl && (
+          <>
+            <p className="text-sm text-[var(--foreground)]">
+              {status === "PENDING"
+                ? "Save the invite link to share once it's approved:"
+                : "Share this link with people you want to invite:"}
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={shareUrl}
+                className="flex-1 h-10 px-3 rounded-full border border-[var(--border)] bg-white text-xs"
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <button
+                type="button"
+                onClick={copy}
+                className="h-10 px-4 rounded-full bg-[var(--accent)] text-white text-sm font-medium"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+          </>
+        )}
         <div className="flex justify-end pt-2">
           <button
             type="button"

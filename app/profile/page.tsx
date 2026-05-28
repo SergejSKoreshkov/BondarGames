@@ -29,6 +29,7 @@ export default async function ProfilePage() {
       startsAt: r.event.startsAt.toISOString(),
       location: r.event.location,
       isPrivate: r.event.isPrivate,
+      status: r.event.status,
     },
   }));
 

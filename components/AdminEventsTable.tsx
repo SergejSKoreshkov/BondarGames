@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDate, formatPrice } from "@/lib/format";
 
-type AdminEvent = {
+export type AdminEvent = {
   id: string;
   title: string;
   gameName: string;
@@ -13,6 +13,7 @@ type AdminEvent = {
   maxPeople: number;
   location: string | null;
   isPrivate: boolean;
+  status: "PENDING" | "CONFIRMED";
   createdBy: { name: string | null; email: string };
   seatsTaken: number;
   reservations: { id: string; people: number; user: { name: string | null; email: string } }[];
@@ -94,6 +95,11 @@ function AdminEventRow({
             >
               {event.isPrivate ? "Private" : "Public"}
             </span>
+            {event.status === "PENDING" && (
+              <span className="inline-flex items-center h-5 px-2 rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium uppercase tracking-wide">
+                Pending
+              </span>
+            )}
           </div>
           <div className="font-medium mt-0.5">{event.title}</div>
           <div className="text-sm text-[var(--muted)]">

@@ -72,7 +72,11 @@ export default async function PrivateEventPage({
         )}
       </div>
 
-      {!session?.user ? (
+      {event.status === "PENDING" ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-700 text-center">
+          This event is waiting for admin approval. Bookings open once it's confirmed.
+        </div>
+      ) : !session?.user ? (
         <Link
           href={`/auth/signin?callbackUrl=/event/${token}`}
           className="block text-center h-11 leading-[44px] rounded-full bg-[var(--accent)] text-white text-sm font-medium"

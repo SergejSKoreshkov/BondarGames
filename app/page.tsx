@@ -23,8 +23,9 @@ export default async function Home() {
   ]);
 
   const data: ScheduleEvent[] = events.map((e) => {
-    const canSeePrivate = isAdmin || (userId && e.createdById === userId);
-    const sanitised = e.isPrivate && !canSeePrivate;
+    const isHost = !!(userId && e.createdById === userId);
+    const canSeeDetails = isAdmin || isHost;
+    const sanitised = (e.isPrivate || e.status === "PENDING") && !canSeeDetails;
     return {
       id: e.id,
       title: sanitised ? null : e.title,
@@ -35,11 +36,12 @@ export default async function Home() {
       maxPeople: e.maxPeople,
       location: sanitised ? null : e.location,
       isPrivate: e.isPrivate,
-      shareToken: canSeePrivate ? e.shareToken : null,
+      status: e.status,
+      shareToken: canSeeDetails ? e.shareToken : null,
       createdBy: sanitised ? null : e.createdBy,
       seatsTaken: e.reservations.reduce((acc, r) => acc + r.people, 0),
       bookedByMe: userId ? e.reservations.some((r) => r.userId === userId) : false,
-      isMine: userId ? e.createdById === userId : false,
+      isMine: isHost,
     };
   });
 

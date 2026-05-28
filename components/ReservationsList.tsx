@@ -14,6 +14,7 @@ type Reservation = {
     startsAt: string;
     location: string | null;
     isPrivate: boolean;
+    status: "PENDING" | "CONFIRMED";
   };
 };
 
@@ -90,6 +91,11 @@ function Row({
           {r.event.isPrivate && (
             <span className="inline-flex h-5 px-2 items-center rounded-full bg-zinc-100 text-zinc-700 text-[10px] font-medium uppercase tracking-wide">
               Private
+            </span>
+          )}
+          {r.event.status === "PENDING" && (
+            <span className="inline-flex h-5 px-2 items-center rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium uppercase tracking-wide">
+              Pending
             </span>
           )}
         </div>

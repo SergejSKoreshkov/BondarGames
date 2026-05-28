@@ -53,6 +53,12 @@ export async function POST(req: Request) {
   if (event.startsAt < new Date()) {
     return NextResponse.json({ error: "Event has already started" }, { status: 400 });
   }
+  if (event.status !== "CONFIRMED") {
+    return NextResponse.json(
+      { error: "This event is waiting for admin approval" },
+      { status: 403 },
+    );
+  }
   if (event.isPrivate) {
     const isHost = event.createdById === session.user.id;
     const isAdmin = session.user.role === "ADMIN";

@@ -3,7 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { AdminSettingsForm } from "@/components/AdminSettingsForm";
-import { AdminEventsTable } from "@/components/AdminEventsTable";
+import { AdminEventsTable, type AdminEvent } from "@/components/AdminEventsTable";
+import { AdminPendingList } from "@/components/AdminPendingList";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function AdminPage() {
     getSettings(),
   ]);
 
-  const data = events.map((e) => ({
+  const data: AdminEvent[] = events.map((e) => ({
     id: e.id,
     title: e.title,
     gameName: e.gameName,
@@ -34,6 +35,7 @@ export default async function AdminPage() {
     maxPeople: e.maxPeople,
     location: e.location,
     isPrivate: e.isPrivate,
+    status: e.status,
     createdBy: e.createdBy,
     reservations: e.reservations.map((r) => ({
       id: r.id,
@@ -43,13 +45,27 @@ export default async function AdminPage() {
     seatsTaken: e.reservations.reduce((acc, r) => acc + r.people, 0),
   }));
 
+  const pending = data.filter((e) => e.status === "PENDING");
+
   return (
     <div className="space-y-10">
       <section>
         <h1 className="text-3xl font-semibold tracking-tight">Admin</h1>
         <p className="text-[var(--muted)] mt-1 text-sm">
-          Set the global price, oversee every event and booking.
+          Approve pending events, set pricing, oversee every booking.
         </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">
+          Pending approval
+          {pending.length > 0 && (
+            <span className="ml-2 inline-flex h-6 px-2 items-center rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+              {pending.length}
+            </span>
+          )}
+        </h2>
+        <AdminPendingList events={pending} />
       </section>
 
       <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">

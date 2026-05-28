@@ -46,6 +46,8 @@ async function main() {
       maxPeople: 6,
       location: "BondarGames cafe",
       createdById: admin.id,
+      status: "CONFIRMED",
+      confirmedAt: new Date(),
     },
   });
   await prisma.reservation.upsert({

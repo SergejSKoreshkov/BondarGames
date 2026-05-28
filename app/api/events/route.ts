@@ -17,11 +17,13 @@ export async function GET() {
     },
   });
 
-  // Public events: full detail.
-  // Private events: blank out title/game/description/location for everyone except admin & creator.
+  // Joiners (anyone other than the host or an admin) only see CONFIRMED events.
+  // Pending and private events are sanitised so the slot still shows as busy.
   const result = events.map((e) => {
-    const canSeePrivate = isAdmin || (userId && e.createdById === userId);
-    if (e.isPrivate && !canSeePrivate) {
+    const isHost = !!(userId && e.createdById === userId);
+    const canSeeDetails = isAdmin || isHost;
+    const sanitise = (e.isPrivate || e.status === "PENDING") && !canSeeDetails;
+    if (sanitise) {
       return {
         id: e.id,
         title: null,
@@ -31,7 +33,8 @@ export async function GET() {
         durationMinutes: e.durationMinutes,
         maxPeople: e.maxPeople,
         location: null,
-        isPrivate: true,
+        isPrivate: e.isPrivate,
+        status: e.status,
         createdBy: null,
         seatsTaken: e.reservations.reduce((acc, r) => acc + r.people, 0),
       };
@@ -46,7 +49,8 @@ export async function GET() {
       maxPeople: e.maxPeople,
       location: e.location,
       isPrivate: e.isPrivate,
-      shareToken: canSeePrivate ? e.shareToken : null,
+      status: e.status,
+      shareToken: canSeeDetails ? e.shareToken : null,
       createdBy: e.createdBy,
       seatsTaken: e.reservations.reduce((acc, r) => acc + r.people, 0),
     };
@@ -125,7 +129,12 @@ export async function POST(req: Request) {
       return created;
     });
     return NextResponse.json(
-      { id: event.id, isPrivate: event.isPrivate, shareToken: event.shareToken },
+      {
+        id: event.id,
+        isPrivate: event.isPrivate,
+        shareToken: event.shareToken,
+        status: event.status,
+      },
       { status: 201 },
     );
   } catch (err) {

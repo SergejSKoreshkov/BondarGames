@@ -11,6 +11,11 @@ enum Role {
   ADMIN
 }
 
+enum EventStatus {
+  PENDING
+  CONFIRMED
+}
+
 model User {
   id              String    @id @default(cuid())
   name            String?
@@ -67,8 +72,10 @@ model Event {
   durationMinutes Int       @default(120)
   maxPeople       Int
   location        String?
-  isPrivate       Boolean   @default(false)
-  shareToken      String?   @unique
+  isPrivate       Boolean     @default(false)
+  shareToken      String?     @unique
+  status          EventStatus @default(PENDING)
+  confirmedAt     DateTime?
   createdById     String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -78,6 +85,7 @@ model Event {
 
   @@index([startsAt])
   @@index([createdById])
+  @@index([status])
 }
 
 model Settings {

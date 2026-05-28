@@ -1,0 +1,98 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { formatDate } from "@/lib/format";
+import type { AdminEvent } from "@/components/AdminEventsTable";
+
+export function AdminPendingList({ events }: { events: AdminEvent[] }) {
+  if (events.length === 0) {
+    return (
+      <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--muted)]">
+        Nothing waiting for approval.
+      </div>
+    );
+  }
+  return (
+    <ul className="grid gap-3">
+      {events.map((e) => (
+        <PendingRow key={e.id} event={e} />
+      ))}
+    </ul>
+  );
+}
+
+function PendingRow({ event }: { event: AdminEvent }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function approve() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/events/${event.id}/confirm`, { method: "POST" });
+    setBusy(false);
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      setError(j.error ?? "Could not approve");
+      return;
+    }
+    router.refresh();
+  }
+
+  async function reject() {
+    if (!confirm(`Reject "${event.title}" and remove all its bookings?`)) return;
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/events/${event.id}`, { method: "DELETE" });
+    setBusy(false);
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      setError(j.error ?? "Could not reject");
+      return;
+    }
+    router.refresh();
+  }
+
+  const durationHours = Math.floor(event.durationMinutes / 60);
+  const durationMins = event.durationMinutes % 60;
+
+  return (
+    <li className="rounded-3xl border border-amber-200 bg-amber-50/60 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 text-xs text-amber-700">
+          <span>{formatDate(event.startsAt)}</span>
+          <span className="inline-flex h-5 px-2 items-center rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium uppercase tracking-wide">
+            {event.isPrivate ? "Private" : "Public"}
+          </span>
+        </div>
+        <div className="font-medium mt-0.5">{event.title}</div>
+        <div className="text-sm text-[var(--muted)]">
+          {event.gameName} · {durationHours}h{durationMins ? ` ${durationMins}m` : ""} ·{" "}
+          {event.maxPeople} max
+          {event.location ? ` · ${event.location}` : ""} · requested by{" "}
+          {event.createdBy.name ?? event.createdBy.email}
+        </div>
+        {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={reject}
+          disabled={busy}
+          className="h-9 px-4 rounded-full bg-white border border-[var(--border)] text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50"
+        >
+          Reject
+        </button>
+        <button
+          type="button"
+          onClick={approve}
+          disabled={busy}
+          className="h-9 px-4 rounded-full bg-emerald-600 text-white text-sm font-medium disabled:opacity-50"
+        >
+          {busy ? "…" : "Approve"}
+        </button>
+      </div>
+    </li>
+  );
+}
