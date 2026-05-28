@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { AdminEventForm } from "@/components/AdminEventForm";
+import { getSettings } from "@/lib/settings";
+import { AdminSettingsForm } from "@/components/AdminSettingsForm";
 import { AdminEventsTable } from "@/components/AdminEventsTable";
 
 export const dynamic = "force-dynamic";
@@ -11,23 +12,28 @@ export default async function AdminPage() {
   if (!session?.user) redirect("/auth/signin");
   if (session.user.role !== "ADMIN") redirect("/");
 
-  const events = await prisma.event.findMany({
-    orderBy: { startsAt: "asc" },
-    include: {
-      reservations: {
-        include: { user: { select: { name: true, email: true } } },
+  const [events, settings] = await Promise.all([
+    prisma.event.findMany({
+      orderBy: { startsAt: "asc" },
+      include: {
+        reservations: {
+          include: { user: { select: { name: true, email: true } } },
+        },
+        createdBy: { select: { name: true, email: true } },
       },
-    },
-  });
+    }),
+    getSettings(),
+  ]);
 
   const data = events.map((e) => ({
     id: e.id,
     title: e.title,
     gameName: e.gameName,
     startsAt: e.startsAt.toISOString(),
+    durationMinutes: e.durationMinutes,
     maxPeople: e.maxPeople,
-    pricePerPerson: e.pricePerPerson,
     location: e.location,
+    createdBy: e.createdBy,
     reservations: e.reservations.map((r) => ({
       id: r.id,
       people: r.people,
@@ -40,17 +46,19 @@ export default async function AdminPage() {
     <div className="space-y-10">
       <section>
         <h1 className="text-3xl font-semibold tracking-tight">Admin</h1>
-        <p className="text-[var(--muted)] mt-1 text-sm">Add, view, and remove events.</p>
+        <p className="text-[var(--muted)] mt-1 text-sm">
+          Set the global price, oversee every event and booking.
+        </p>
       </section>
 
       <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-        <h2 className="text-lg font-semibold mb-4">New event</h2>
-        <AdminEventForm />
+        <h2 className="text-lg font-semibold mb-4">Global price</h2>
+        <AdminSettingsForm initial={settings.pricePerPerson} />
       </section>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">All events</h2>
-        <AdminEventsTable events={data} />
+        <AdminEventsTable events={data} pricePerPerson={settings.pricePerPerson} />
       </section>
     </div>
   );

@@ -9,14 +9,21 @@ type AdminEvent = {
   title: string;
   gameName: string;
   startsAt: string;
+  durationMinutes: number;
   maxPeople: number;
-  pricePerPerson: number;
   location: string | null;
+  createdBy: { name: string | null; email: string };
   seatsTaken: number;
   reservations: { id: string; people: number; user: { name: string | null; email: string } }[];
 };
 
-export function AdminEventsTable({ events }: { events: AdminEvent[] }) {
+export function AdminEventsTable({
+  events,
+  pricePerPerson,
+}: {
+  events: AdminEvent[];
+  pricePerPerson: number;
+}) {
   if (events.length === 0) {
     return (
       <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-10 text-center text-[var(--muted)]">
@@ -27,13 +34,19 @@ export function AdminEventsTable({ events }: { events: AdminEvent[] }) {
   return (
     <ul className="grid gap-3">
       {events.map((e) => (
-        <AdminEventRow key={e.id} event={e} />
+        <AdminEventRow key={e.id} event={e} pricePerPerson={pricePerPerson} />
       ))}
     </ul>
   );
 }
 
-function AdminEventRow({ event }: { event: AdminEvent }) {
+function AdminEventRow({
+  event,
+  pricePerPerson,
+}: {
+  event: AdminEvent;
+  pricePerPerson: number;
+}) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
@@ -61,9 +74,10 @@ function AdminEventRow({ event }: { event: AdminEvent }) {
           <div className="text-xs text-[var(--muted)]">{formatDate(event.startsAt)}</div>
           <div className="font-medium">{event.title}</div>
           <div className="text-sm text-[var(--muted)]">
-            {event.gameName} · {event.seatsTaken}/{event.maxPeople} booked ·{" "}
-            {formatPrice(event.pricePerPerson)}/person
-            {event.location ? ` · ${event.location}` : ""}
+            {event.gameName} · {event.seatsTaken}/{event.maxPeople} seats ·{" "}
+            {formatPrice(pricePerPerson)}/person
+            {event.location ? ` · ${event.location}` : ""} · hosted by{" "}
+            {event.createdBy.name ?? event.createdBy.email}
           </div>
         </div>
         <button

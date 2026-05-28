@@ -36,11 +36,12 @@ export async function sendVerificationEmail(to: string, link: string) {
 
 export async function sendReservationEmail(
   to: string,
-  event: { title: string; startsAt: Date; pricePerPerson: number; location: string | null },
+  event: { title: string; startsAt: Date; location: string | null },
   people: number,
+  pricePerPerson: number,
 ) {
   const transport = getTransport();
-  const total = people * event.pricePerPerson;
+  const total = people * pricePerPerson;
   await transport.sendMail({
     from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
     to,

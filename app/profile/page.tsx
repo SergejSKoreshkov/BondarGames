@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
 import { ReservationsList } from "@/components/ReservationsList";
 
 export const dynamic = "force-dynamic";
@@ -9,11 +10,14 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/signin");
 
-  const reservations = await prisma.reservation.findMany({
-    where: { userId: session.user.id },
-    include: { event: true },
-    orderBy: { event: { startsAt: "asc" } },
-  });
+  const [reservations, settings] = await Promise.all([
+    prisma.reservation.findMany({
+      where: { userId: session.user.id },
+      include: { event: true },
+      orderBy: { event: { startsAt: "asc" } },
+    }),
+    getSettings(),
+  ]);
 
   const data = reservations.map((r) => ({
     id: r.id,
@@ -23,7 +27,6 @@ export default async function ProfilePage() {
       title: r.event.title,
       gameName: r.event.gameName,
       startsAt: r.event.startsAt.toISOString(),
-      pricePerPerson: r.event.pricePerPerson,
       location: r.event.location,
     },
   }));
@@ -39,7 +42,7 @@ export default async function ProfilePage() {
           )}
         </p>
       </section>
-      <ReservationsList reservations={data} />
+      <ReservationsList reservations={data} pricePerPerson={settings.pricePerPerson} />
     </div>
   );
 }

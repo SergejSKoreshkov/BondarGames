@@ -24,6 +24,7 @@ model User {
   accounts        Account[]
   reservations    Reservation[]
   verifications   VerificationToken[]
+  createdEvents   Event[]   @relation("EventCreator")
 }
 
 model Account {
@@ -65,14 +66,22 @@ model Event {
   startsAt        DateTime
   durationMinutes Int       @default(120)
   maxPeople       Int
-  pricePerPerson  Int
   location        String?
+  createdById     String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  createdBy    User          @relation("EventCreator", fields: [createdById], references: [id], onDelete: Cascade)
   reservations Reservation[]
 
   @@index([startsAt])
+  @@index([createdById])
+}
+
+model Settings {
+  id              Int      @id @default(1)
+  pricePerPerson  Int      @default(10)
+  updatedAt       DateTime @updatedAt
 }
 
 model Reservation {

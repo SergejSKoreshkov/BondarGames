@@ -12,14 +12,19 @@ type Reservation = {
     title: string;
     gameName: string;
     startsAt: string;
-    pricePerPerson: number;
     location: string | null;
   };
 };
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
-export function ReservationsList({ reservations }: { reservations: Reservation[] }) {
+export function ReservationsList({
+  reservations,
+  pricePerPerson,
+}: {
+  reservations: Reservation[];
+  pricePerPerson: number;
+}) {
   if (reservations.length === 0) {
     return (
       <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-10 text-center text-[var(--muted)]">
@@ -30,13 +35,13 @@ export function ReservationsList({ reservations }: { reservations: Reservation[]
   return (
     <ul className="grid gap-3">
       {reservations.map((r) => (
-        <Row key={r.id} r={r} />
+        <Row key={r.id} r={r} pricePerPerson={pricePerPerson} />
       ))}
     </ul>
   );
 }
 
-function Row({ r }: { r: Reservation }) {
+function Row({ r, pricePerPerson }: { r: Reservation; pricePerPerson: number }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -67,7 +72,7 @@ function Row({ r }: { r: Reservation }) {
         <div className="font-medium">{r.event.title}</div>
         <div className="text-sm text-[var(--muted)]">
           {r.event.gameName} · {r.people} {r.people === 1 ? "seat" : "seats"} ·{" "}
-          {formatPrice(r.event.pricePerPerson * r.people)}
+          {formatPrice(pricePerPerson * r.people)}
         </div>
         {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
       </div>

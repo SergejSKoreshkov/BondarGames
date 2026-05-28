@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { sendReservationEmail } from "@/lib/mailer";
+import { getSettings } from "@/lib/settings";
 
 const schema = z.object({
   eventId: z.string().min(1),
@@ -27,7 +28,6 @@ export async function GET() {
         title: r.event.title,
         gameName: r.event.gameName,
         startsAt: r.event.startsAt.toISOString(),
-        pricePerPerson: r.event.pricePerPerson,
         location: r.event.location,
       },
     })),
@@ -72,8 +72,9 @@ export async function POST(req: Request) {
   });
 
   if (session.user.email) {
-    sendReservationEmail(session.user.email, event, parsed.data.people).catch((e) =>
-      console.error("reservation email failed", e),
+    const settings = await getSettings();
+    sendReservationEmail(session.user.email, event, parsed.data.people, settings.pricePerPerson).catch(
+      (e) => console.error("reservation email failed", e),
     );
   }
 

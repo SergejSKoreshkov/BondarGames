@@ -3,6 +3,14 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../lib/db";
 
 async function main() {
+  // Global settings (singleton)
+  await prisma.settings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: { id: 1, pricePerPerson: 10 },
+  });
+  console.log("Seeded settings");
+
   const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
   if (!adminEmail) {
     console.warn("ADMIN_EMAIL not set — skipping admin seed");
@@ -11,7 +19,7 @@ async function main() {
   const password = process.env.ADMIN_PASSWORD ?? "changeme1234";
   const passwordHash = await bcrypt.hash(password, 12);
 
-  await prisma.user.upsert({
+  const admin = await prisma.user.upsert({
     where: { email: adminEmail },
     update: { role: "ADMIN", emailVerified: new Date() },
     create: {
@@ -25,7 +33,7 @@ async function main() {
   console.log(`Seeded admin user ${adminEmail} (password: ${password})`);
 
   const sampleStartsAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 3);
-  await prisma.event.upsert({
+  const sample = await prisma.event.upsert({
     where: { id: "seed-sample-event" },
     update: {},
     create: {
@@ -36,9 +44,14 @@ async function main() {
       startsAt: sampleStartsAt,
       durationMinutes: 150,
       maxPeople: 6,
-      pricePerPerson: 8,
       location: "BondarGames cafe",
+      createdById: admin.id,
     },
+  });
+  await prisma.reservation.upsert({
+    where: { eventId_userId: { eventId: sample.id, userId: admin.id } },
+    update: {},
+    create: { eventId: sample.id, userId: admin.id, people: 1 },
   });
   console.log("Seeded sample event");
 }
