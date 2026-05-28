@@ -95,23 +95,16 @@ export function Schedule({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <WeekNav weekStart={weekStart} onChange={setWeekStart} />
         <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
-          <Legend swatch="bg-[var(--accent)]" label={`${formatPrice(publicPricePerPerson)}/pp`} />
-          <Legend swatch="bg-zinc-400" label={`${formatPrice(privatePricePerEvent)} flat`} />
+          <Legend swatch="bg-gradient-to-br from-indigo-500 to-violet-600" label={`${formatPrice(publicPricePerPerson)}/pp`} />
+          <Legend swatch="bg-gradient-to-br from-zinc-400 to-zinc-500" label={`${formatPrice(privatePricePerEvent)} flat`} />
           {canBook && emailVerified ? (
-            <button
-              type="button"
-              onClick={() => openCreate()}
-              className="h-9 px-4 rounded-full bg-[var(--accent)] text-white text-sm font-medium"
-            >
+            <button type="button" onClick={() => openCreate()} className="btn btn-sm glass-accent">
               Host a game
             </button>
           ) : canBook ? (
-            <span className="text-amber-600">Verify email to host</span>
+            <span className="text-amber-700">Verify email to host</span>
           ) : (
-            <Link
-              href="/auth/signin"
-              className="h-9 px-4 leading-9 rounded-full bg-[var(--accent)] text-white text-sm font-medium"
-            >
+            <Link href="/auth/signin" className="btn btn-sm glass-accent">
               Sign in to host
             </Link>
           )}
@@ -119,10 +112,10 @@ export function Schedule({
       </div>
 
       {/* Week grid */}
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
+      <div className="glass rounded-3xl overflow-hidden">
         {/* Day headers */}
         <div
-          className="grid border-b border-[var(--border)] text-xs"
+          className="grid border-b border-white/40 text-xs bg-white/30"
           style={{ gridTemplateColumns: "44px repeat(7, minmax(0, 1fr))" }}
         >
           <div />
@@ -141,7 +134,7 @@ export function Schedule({
                 <div
                   className={`text-sm font-semibold leading-tight ${
                     isToday
-                      ? "inline-flex items-center justify-center h-6 w-6 rounded-full bg-[var(--accent)] text-white mt-0.5"
+                      ? "inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white mt-0.5 shadow-[0_4px_10px_-3px_rgba(67,56,202,0.5)]"
                       : ""
                   }`}
                 >
@@ -161,7 +154,7 @@ export function Schedule({
           }}
         >
           {/* Time column */}
-          <div className="relative border-r border-[var(--border)]">
+          <div className="relative border-r border-white/40">
             {HOURS.map((h) => (
               <div
                 key={h}
@@ -257,7 +250,7 @@ function WeekNav({
       <button
         type="button"
         onClick={() => onChange(addDays(weekStart, -7))}
-        className="h-9 w-9 rounded-full border border-[var(--border)] hover:bg-black/5 text-sm"
+        className="glass glass-hover h-9 w-9 rounded-full text-base"
         aria-label="Previous week"
       >
         ‹
@@ -266,14 +259,14 @@ function WeekNav({
         type="button"
         onClick={() => onChange(todayWeek)}
         disabled={isThisWeek}
-        className="h-9 px-3 rounded-full border border-[var(--border)] hover:bg-black/5 text-xs disabled:opacity-50"
+        className="glass glass-hover h-9 px-3 rounded-full text-xs disabled:opacity-50"
       >
         Today
       </button>
       <button
         type="button"
         onClick={() => onChange(addDays(weekStart, 7))}
-        className="h-9 w-9 rounded-full border border-[var(--border)] hover:bg-black/5 text-sm"
+        className="glass glass-hover h-9 w-9 rounded-full text-base"
         aria-label="Next week"
       >
         ›
@@ -289,7 +282,8 @@ function WeekNav({
             if (!v) return;
             onChange(startOfWeek(new Date(v + "T00:00:00")));
           }}
-          className="h-9 px-2 rounded-full border border-[var(--border)] bg-white text-xs"
+          className="field h-9 text-xs"
+          style={{ width: "auto" }}
         />
       </label>
     </div>
@@ -310,14 +304,14 @@ function DayColumn({
   isLast: boolean;
 }) {
   return (
-    <div className={`relative ${isLast ? "" : "border-r border-[var(--border)]"}`}>
+    <div className={`relative ${isLast ? "" : "border-r border-white/40"}`}>
       {/* Hour rows (background grid) */}
       {HOURS.map((h) => (
         <button
           key={h}
           type="button"
           onClick={() => onEmptyClick(h)}
-          className="absolute left-0 right-0 border-t border-[var(--border)]/60 hover:bg-[var(--accent)]/5"
+          className="absolute left-0 right-0 border-t border-white/30 hover:bg-white/30 transition-colors"
           style={{ top: h * HOUR_HEIGHT, height: HOUR_HEIGHT }}
           aria-label={`${fmtHourLabel(h)} on ${day.toDateString()}`}
         />
@@ -330,21 +324,21 @@ function DayColumn({
         const height = Math.max((e.durationMinutes / 60) * HOUR_HEIGHT - 2, 18);
         const pending = e.status === "PENDING";
         const blockClasses = pending
-          ? "bg-amber-100 text-amber-900 hover:bg-amber-200 border border-dashed border-amber-400"
+          ? "bg-gradient-to-br from-amber-200/85 to-amber-300/80 text-amber-900 border border-amber-400/60 border-dashed shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_4px_10px_-3px_rgba(180,83,9,0.25)] hover:from-amber-200 hover:to-amber-300"
           : e.isPrivate
-            ? "bg-zinc-500/90 text-white hover:bg-zinc-500"
-            : "bg-[var(--accent)] text-white hover:opacity-90";
+            ? "bg-gradient-to-br from-zinc-400/85 to-zinc-500/85 text-white border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_10px_-3px_rgba(15,23,42,0.25)] hover:brightness-105"
+            : "bg-gradient-to-br from-indigo-500/90 to-violet-600/90 text-white border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_6px_14px_-4px_rgba(67,56,202,0.45)] hover:brightness-110";
         const label = pending && !e.title ? "Pending" : e.isPrivate && !e.title ? "Private" : e.title;
         return (
           <button
             type="button"
             key={e.id}
             onClick={() => onEventClick(e)}
-            className={`absolute left-0.5 right-0.5 rounded-md text-[10px] sm:text-xs px-1.5 py-1 text-left overflow-hidden ${blockClasses}`}
+            className={`absolute left-0.5 right-0.5 rounded-lg text-[10px] sm:text-xs px-1.5 py-1 text-left overflow-hidden transition ${blockClasses}`}
             style={{ top, height }}
           >
-            <div className="font-medium truncate leading-tight">{label}</div>
-            <div className="opacity-80 truncate leading-tight">{fmtTime(start)}</div>
+            <div className="font-semibold truncate leading-tight">{label}</div>
+            <div className="opacity-85 truncate leading-tight">{fmtTime(start)}</div>
           </button>
         );
       })}
@@ -459,11 +453,11 @@ function EventDetailDialog({
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-black/30 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-[var(--surface)] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 shadow-xl space-y-4"
+        className="glass-strong rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
@@ -480,12 +474,12 @@ function EventDetailDialog({
             </h2>
             <div className="flex items-center gap-1.5 mt-1">
               {isPending && (
-                <span className="inline-flex h-5 px-2 items-center rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium uppercase tracking-wide">
+                <span className="glass-warn inline-flex h-5 px-2 items-center rounded-full text-[10px] font-medium uppercase tracking-wide">
                   Pending
                 </span>
               )}
               {event.isPrivate && !isLockedByPending && (
-                <span className="inline-flex h-5 px-2 items-center rounded-full bg-zinc-100 text-zinc-700 text-[10px] font-medium uppercase tracking-wide">
+                <span className="glass-soft inline-flex h-5 px-2 items-center rounded-full text-zinc-700 text-[10px] font-medium uppercase tracking-wide">
                   Private
                 </span>
               )}
@@ -497,7 +491,7 @@ function EventDetailDialog({
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 shrink-0 rounded-full hover:bg-black/5"
+            className="glass glass-hover h-8 w-8 shrink-0 rounded-full"
             aria-label="Close"
           >
             ×
@@ -546,22 +540,12 @@ function EventDetailDialog({
 
         <div className="flex items-center justify-end gap-2 pt-2 flex-wrap">
           {isAdmin && isPending && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={approveEvent}
-              className="h-10 px-5 rounded-full bg-emerald-600 text-white text-sm font-medium disabled:opacity-50"
-            >
+            <button type="button" disabled={busy} onClick={approveEvent} className="btn glass-success">
               {busy ? "…" : "Approve"}
             </button>
           )}
           {canDelete && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={remove}
-              className="h-10 px-4 rounded-full bg-red-50 text-red-600 text-sm font-medium disabled:opacity-50"
-            >
+            <button type="button" disabled={busy} onClick={remove} className="btn glass-danger">
               {isAdmin && isPending ? "Reject" : "Delete"}
             </button>
           )}
@@ -571,7 +555,8 @@ function EventDetailDialog({
                 aria-label="People"
                 value={people}
                 onChange={(e) => setPeople(Number(e.target.value))}
-                className="h-10 px-3 rounded-full border border-[var(--border)] bg-white text-sm"
+                className="field"
+                style={{ width: "auto", height: 40 }}
               >
                 {Array.from({ length: Math.min(seatsLeft, 10) }, (_, i) => i + 1).map((n) => (
                   <option key={n} value={n}>
@@ -579,29 +564,18 @@ function EventDetailDialog({
                   </option>
                 ))}
               </select>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={book}
-                className="h-10 px-5 rounded-full bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50"
-              >
+              <button type="button" disabled={busy} onClick={book} className="btn glass-accent">
                 {busy ? "…" : "Book"}
               </button>
             </>
           )}
           {!isPrivateLocked && event.bookedByMe && (
-            <Link
-              href="/profile"
-              className="h-10 px-4 leading-10 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium"
-            >
+            <Link href="/profile" className="btn glass-success">
               You're in
             </Link>
           )}
           {!canBook && !event.isPrivate && (
-            <Link
-              href="/auth/signin"
-              className="h-10 px-4 leading-10 rounded-full bg-[var(--accent)] text-white text-sm font-medium"
-            >
+            <Link href="/auth/signin" className="btn glass-accent">
               Sign in to book
             </Link>
           )}
@@ -631,11 +605,11 @@ function CreatedDialog({
   }
   return (
     <div
-      className="fixed inset-0 z-40 bg-black/30 flex items-center justify-center p-4"
+      className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="bg-[var(--surface)] rounded-3xl w-full max-w-sm p-6 shadow-xl space-y-3"
+        className="glass-strong rounded-3xl w-full max-w-sm p-6 space-y-3"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold">
@@ -659,25 +633,17 @@ function CreatedDialog({
               <input
                 readOnly
                 value={shareUrl}
-                className="flex-1 h-10 px-3 rounded-full border border-[var(--border)] bg-white text-xs"
+                className="field flex-1 text-xs"
                 onFocus={(e) => e.currentTarget.select()}
               />
-              <button
-                type="button"
-                onClick={copy}
-                className="h-10 px-4 rounded-full bg-[var(--accent)] text-white text-sm font-medium"
-              >
+              <button type="button" onClick={copy} className="btn glass-accent">
                 {copied ? "Copied" : "Copy"}
               </button>
             </div>
           </>
         )}
         <div className="flex justify-end pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-9 px-4 rounded-full text-sm hover:bg-black/5"
-          >
+          <button type="button" onClick={onClose} className="btn btn-sm glass glass-hover">
             Done
           </button>
         </div>

@@ -60,7 +60,7 @@ export default async function AdminPage() {
         <h2 className="text-lg font-semibold">
           Pending approval
           {pending.length > 0 && (
-            <span className="ml-2 inline-flex h-6 px-2 items-center rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+            <span className="glass-warn ml-2 inline-flex h-6 px-2 items-center rounded-full text-xs font-medium">
               {pending.length}
             </span>
           )}
@@ -68,7 +68,7 @@ export default async function AdminPage() {
         <AdminPendingList events={pending} />
       </section>
 
-      <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+      <section className="glass rounded-3xl p-6">
         <h2 className="text-lg font-semibold mb-4">Pricing</h2>
         <AdminSettingsForm
           initialPublic={settings.publicPricePerPerson}

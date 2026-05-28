@@ -32,7 +32,7 @@ export function SignUpForm() {
 
   if (done) {
     return (
-      <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 text-sm space-y-2">
+      <div className="glass-strong rounded-3xl p-6 text-sm space-y-2">
         <div className="font-medium">Check your inbox</div>
         <p className="text-[var(--muted)]">
           We sent a confirmation link to <b>{email}</b>. Click it to verify your email, then sign in.
@@ -45,18 +45,18 @@ export function SignUpForm() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="glass-strong rounded-3xl p-6 space-y-4">
       <button
         type="button"
         onClick={() => signIn("google", { callbackUrl: "/" })}
-        className="w-full h-11 rounded-full border border-[var(--border)] bg-white flex items-center justify-center gap-2 text-sm font-medium hover:bg-black/5"
+        className="btn w-full glass glass-hover"
       >
         Continue with Google
       </button>
       <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
-        <div className="flex-1 h-px bg-[var(--border)]" />
+        <div className="flex-1 h-px bg-white/50" />
         or
-        <div className="flex-1 h-px bg-[var(--border)]" />
+        <div className="flex-1 h-px bg-white/50" />
       </div>
       <form onSubmit={onSubmit} className="space-y-3">
         <Field label="Name">
@@ -64,7 +64,7 @@ export function SignUpForm() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="input"
+            className="field"
             autoComplete="name"
           />
         </Field>
@@ -74,7 +74,7 @@ export function SignUpForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="input"
+            className="field"
             autoComplete="email"
           />
         </Field>
@@ -85,16 +85,12 @@ export function SignUpForm() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input"
+            className="field"
             autoComplete="new-password"
           />
         </Field>
         {error && <div className="text-xs text-red-500">{error}</div>}
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full h-11 rounded-full bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50"
-        >
+        <button type="submit" disabled={busy} className="btn w-full glass-accent">
           {busy ? "Creating…" : "Create account"}
         </button>
       </form>
@@ -104,10 +100,6 @@ export function SignUpForm() {
           Sign in
         </Link>
       </p>
-      <style>{`
-        .input { width: 100%; height: 44px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--border); background: white; font-size: 14px; outline: none; }
-        .input:focus { border-color: var(--accent); }
-      `}</style>
     </div>
   );
 }

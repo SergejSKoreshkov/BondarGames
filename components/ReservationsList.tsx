@@ -31,7 +31,7 @@ export function ReservationsList({
 }) {
   if (reservations.length === 0) {
     return (
-      <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-10 text-center text-[var(--muted)]">
+      <div className="glass rounded-3xl p-10 text-center text-[var(--muted)]">
         You haven't booked any games yet.
       </div>
     );
@@ -84,22 +84,22 @@ function Row({
   }
 
   return (
-    <li className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
+    <li className="glass rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
           <span>{formatDate(r.event.startsAt)}</span>
           {r.event.isPrivate && (
-            <span className="inline-flex h-5 px-2 items-center rounded-full bg-zinc-100 text-zinc-700 text-[10px] font-medium uppercase tracking-wide">
+            <span className="glass-soft inline-flex h-5 px-2 items-center rounded-full text-zinc-700 text-[10px] font-medium uppercase tracking-wide">
               Private
             </span>
           )}
           {r.event.status === "PENDING" && (
-            <span className="inline-flex h-5 px-2 items-center rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium uppercase tracking-wide">
+            <span className="glass-warn inline-flex h-5 px-2 items-center rounded-full text-[10px] font-medium uppercase tracking-wide">
               Pending
             </span>
           )}
         </div>
-        <div className="font-medium mt-0.5">{r.event.title}</div>
+        <div className="font-semibold mt-0.5">{r.event.title}</div>
         <div className="text-sm text-[var(--muted)]">
           {r.event.gameName} · {r.people} {r.people === 1 ? "seat" : "seats"} · {formatPrice(total)}
           {r.event.isPrivate && " flat"}
@@ -113,12 +113,12 @@ function Row({
           type="button"
           disabled={busy}
           onClick={cancel}
-          className="h-9 px-4 rounded-full border border-[var(--border)] text-sm hover:bg-black/5 disabled:opacity-50 self-start sm:self-auto"
+          className="btn btn-sm glass glass-hover self-start sm:self-auto"
         >
           {busy ? "…" : "Cancel"}
         </button>
       ) : (
-        <span className="text-xs text-amber-600 sm:max-w-[120px] sm:text-right">
+        <span className="text-xs text-amber-700 sm:max-w-[120px] sm:text-right">
           Within 24h — cancellation closed
         </span>
       )}

@@ -50,7 +50,7 @@ export function AdminSettingsForm({
           min={0}
           value={pub}
           onChange={(e) => setPub(Number(e.target.value))}
-          className="w-full h-11 px-3 rounded-2xl border border-[var(--border)] bg-white text-sm outline-none focus:border-[var(--accent)]"
+          className="field"
         />
       </label>
       <label className="block">
@@ -62,18 +62,14 @@ export function AdminSettingsForm({
           min={0}
           value={priv}
           onChange={(e) => setPriv(Number(e.target.value))}
-          className="w-full h-11 px-3 rounded-2xl border border-[var(--border)] bg-white text-sm outline-none focus:border-[var(--accent)]"
+          className="field"
         />
       </label>
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={busy || !dirty}
-          className="h-11 px-5 rounded-full bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50"
-        >
+        <button type="submit" disabled={busy || !dirty} className="btn glass-accent">
           {busy ? "Saving…" : "Save"}
         </button>
-        {saved && <span className="text-xs text-emerald-600">Saved.</span>}
+        {saved && <span className="text-xs text-emerald-700">Saved.</span>}
         {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
     </form>

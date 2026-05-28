@@ -38,7 +38,7 @@ export default async function PrivateEventPage({
         <h1 className="text-2xl font-semibold tracking-tight">{event.title}</h1>
       </div>
 
-      <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 space-y-3">
+      <div className="glass-strong rounded-3xl p-6 space-y-3">
         <dl className="text-sm grid grid-cols-3 gap-y-2">
           <dt className="text-[var(--muted)] col-span-1">When</dt>
           <dd className="col-span-2">
@@ -73,18 +73,18 @@ export default async function PrivateEventPage({
       </div>
 
       {event.status === "PENDING" ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-700 text-center">
+        <div className="glass-warn rounded-2xl px-5 py-4 text-sm text-center">
           This event is waiting for admin approval. Bookings open once it's confirmed.
         </div>
       ) : !session?.user ? (
         <Link
           href={`/auth/signin?callbackUrl=/event/${token}`}
-          className="block text-center h-11 leading-[44px] rounded-full bg-[var(--accent)] text-white text-sm font-medium"
+          className="btn w-full glass-accent"
         >
           Sign in to join
         </Link>
       ) : !session.user.emailVerified ? (
-        <div className="text-sm text-amber-600 text-center">
+        <div className="glass-warn rounded-2xl px-5 py-4 text-sm text-center">
           Verify your email to join this event.
         </div>
       ) : (

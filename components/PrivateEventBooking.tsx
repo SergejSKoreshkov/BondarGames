@@ -24,14 +24,14 @@ export function PrivateEventBooking({
 
   if (alreadyBooked) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-700 text-center">
+      <div className="glass-success rounded-2xl px-5 py-4 text-sm text-center">
         You're booked into this event.
       </div>
     );
   }
   if (seatsLeft <= 0) {
     return (
-      <div className="rounded-2xl border border-[var(--border)] px-5 py-4 text-sm text-[var(--muted)] text-center">
+      <div className="glass rounded-2xl px-5 py-4 text-sm text-[var(--muted)] text-center">
         This event is full.
       </div>
     );
@@ -55,12 +55,13 @@ export function PrivateEventBooking({
   }
 
   return (
-    <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-4 flex items-center gap-3">
+    <div className="glass rounded-3xl p-4 flex flex-wrap items-center gap-3">
       <select
         aria-label="People"
         value={people}
         onChange={(e) => setPeople(Number(e.target.value))}
-        className="h-11 px-3 rounded-full border border-[var(--border)] bg-white text-sm"
+        className="field"
+        style={{ width: "auto", height: 44 }}
       >
         {Array.from({ length: Math.min(seatsLeft, 10) }, (_, i) => i + 1).map((n) => (
           <option key={n} value={n}>
@@ -68,12 +69,7 @@ export function PrivateEventBooking({
           </option>
         ))}
       </select>
-      <button
-        type="button"
-        disabled={busy}
-        onClick={book}
-        className="flex-1 h-11 rounded-full bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50"
-      >
+      <button type="button" disabled={busy} onClick={book} className="btn flex-1 glass-accent">
         {busy ? "Booking…" : "Join the game"}
       </button>
       {error && <div className="basis-full text-xs text-red-500">{error}</div>}

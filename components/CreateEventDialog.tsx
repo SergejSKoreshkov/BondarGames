@@ -90,11 +90,11 @@ export function CreateEventDialog({
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-black/30 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-[var(--surface)] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 shadow-xl max-h-[95vh] overflow-y-auto"
+        className="glass-strong rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 max-h-[95vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4">
@@ -109,7 +109,7 @@ export function CreateEventDialog({
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-full hover:bg-black/5"
+            className="glass glass-hover h-8 w-8 rounded-full"
             aria-label="Close"
           >
             ×
@@ -118,7 +118,7 @@ export function CreateEventDialog({
         <form onSubmit={submit} className="grid grid-cols-2 gap-3">
           <Field label="Title" full>
             <input
-              className="input"
+              className="field"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -126,7 +126,7 @@ export function CreateEventDialog({
           </Field>
           <Field label="Game" full>
             <input
-              className="input"
+              className="field"
               required
               value={gameName}
               onChange={(e) => setGameName(e.target.value)}
@@ -135,7 +135,7 @@ export function CreateEventDialog({
           <Field label="Starts" full>
             <input
               type="datetime-local"
-              className="input"
+              className="field"
               required
               value={startsAt}
               onChange={(e) => setStartsAt(e.target.value)}
@@ -145,7 +145,7 @@ export function CreateEventDialog({
             <input
               type="time"
               step={300}
-              className="input"
+              className="field"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
             />
@@ -153,7 +153,7 @@ export function CreateEventDialog({
           <Field label="Max people">
             <input
               type="number"
-              className="input"
+              className="field"
               min={1}
               max={100}
               value={maxPeople}
@@ -163,7 +163,7 @@ export function CreateEventDialog({
           <Field label="Your seats">
             <input
               type="number"
-              className="input"
+              className="field"
               min={1}
               max={maxPeople}
               value={people}
@@ -172,25 +172,25 @@ export function CreateEventDialog({
           </Field>
           <Field label="Location" full>
             <input
-              className="input"
+              className="field"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
           </Field>
           <Field label="Description" full>
             <textarea
-              className="input min-h-[60px] py-3"
+              className="field min-h-[80px]"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </Field>
 
-          <label className="col-span-2 flex items-start gap-3 rounded-2xl border border-[var(--border)] p-3 cursor-pointer">
+          <label className="col-span-2 glass-soft rounded-2xl p-3 flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={isPrivate}
               onChange={(e) => setIsPrivate(e.target.checked)}
-              className="mt-1"
+              className="mt-1 accent-indigo-600"
             />
             <span className="text-sm">
               <span className="font-medium block">Private event</span>
@@ -203,26 +203,14 @@ export function CreateEventDialog({
 
           {error && <div className="col-span-2 text-xs text-red-500">{error}</div>}
           <div className="col-span-2 flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-10 px-4 rounded-full text-sm hover:bg-black/5"
-            >
+            <button type="button" onClick={onClose} className="btn btn-sm glass glass-hover">
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={busy}
-              className="h-10 px-5 rounded-full bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50"
-            >
+            <button type="submit" disabled={busy} className="btn glass-accent">
               {busy ? "Creating…" : "Create"}
             </button>
           </div>
         </form>
-        <style>{`
-          .input { width: 100%; height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: white; font-size: 14px; outline: none; }
-          .input:focus { border-color: var(--accent); }
-        `}</style>
       </div>
     </div>
   );

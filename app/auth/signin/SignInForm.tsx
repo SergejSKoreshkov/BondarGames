@@ -29,19 +29,19 @@ export function SignInForm() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="glass-strong rounded-3xl p-6 space-y-4">
       <button
         type="button"
         onClick={() => signIn("google", { callbackUrl: "/" })}
-        className="w-full h-11 rounded-full border border-[var(--border)] bg-white flex items-center justify-center gap-2 text-sm font-medium hover:bg-black/5"
+        className="btn w-full glass glass-hover"
       >
         <GoogleMark /> Continue with Google
       </button>
 
       <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
-        <div className="flex-1 h-px bg-[var(--border)]" />
+        <div className="flex-1 h-px bg-white/50" />
         or
-        <div className="flex-1 h-px bg-[var(--border)]" />
+        <div className="flex-1 h-px bg-white/50" />
       </div>
 
       <form onSubmit={onSubmit} className="space-y-3">
@@ -51,7 +51,7 @@ export function SignInForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="input"
+            className="field"
             autoComplete="email"
           />
         </Field>
@@ -62,16 +62,12 @@ export function SignInForm() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input"
+            className="field"
             autoComplete="current-password"
           />
         </Field>
         {error && <div className="text-xs text-red-500">{error}</div>}
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full h-11 rounded-full bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50"
-        >
+        <button type="submit" disabled={busy} className="btn w-full glass-accent">
           {busy ? "Signing in…" : "Sign in"}
         </button>
       </form>
@@ -82,22 +78,6 @@ export function SignInForm() {
           Create an account
         </Link>
       </p>
-
-      <style>{`
-        .input {
-          width: 100%;
-          height: 44px;
-          padding: 0 16px;
-          border-radius: 14px;
-          border: 1px solid var(--border);
-          background: white;
-          font-size: 14px;
-          outline: none;
-        }
-        .input:focus {
-          border-color: var(--accent);
-        }
-      `}</style>
     </div>
   );
 }

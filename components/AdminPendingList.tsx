@@ -8,7 +8,7 @@ import type { AdminEvent } from "@/components/AdminEventsTable";
 export function AdminPendingList({ events }: { events: AdminEvent[] }) {
   if (events.length === 0) {
     return (
-      <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--muted)]">
+      <div className="glass rounded-3xl p-6 text-sm text-[var(--muted)]">
         Nothing waiting for approval.
       </div>
     );
@@ -58,16 +58,16 @@ function PendingRow({ event }: { event: AdminEvent }) {
   const durationMins = event.durationMinutes % 60;
 
   return (
-    <li className="rounded-3xl border border-amber-200 bg-amber-50/60 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+    <li className="glass-warn rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 text-xs text-amber-700">
+        <div className="flex items-center gap-2 text-xs">
           <span>{formatDate(event.startsAt)}</span>
-          <span className="inline-flex h-5 px-2 items-center rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium uppercase tracking-wide">
+          <span className="glass-soft inline-flex h-5 px-2 items-center rounded-full text-[10px] font-medium uppercase tracking-wide text-zinc-700">
             {event.isPrivate ? "Private" : "Public"}
           </span>
         </div>
-        <div className="font-medium mt-0.5">{event.title}</div>
-        <div className="text-sm text-[var(--muted)]">
+        <div className="font-semibold mt-0.5 text-[var(--foreground)]">{event.title}</div>
+        <div className="text-sm text-[var(--foreground)]/70">
           {event.gameName} · {durationHours}h{durationMins ? ` ${durationMins}m` : ""} ·{" "}
           {event.maxPeople} max
           {event.location ? ` · ${event.location}` : ""} · requested by{" "}
@@ -76,20 +76,10 @@ function PendingRow({ event }: { event: AdminEvent }) {
         {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <button
-          type="button"
-          onClick={reject}
-          disabled={busy}
-          className="h-9 px-4 rounded-full bg-white border border-[var(--border)] text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50"
-        >
+        <button type="button" onClick={reject} disabled={busy} className="btn btn-sm glass-danger">
           Reject
         </button>
-        <button
-          type="button"
-          onClick={approve}
-          disabled={busy}
-          className="h-9 px-4 rounded-full bg-emerald-600 text-white text-sm font-medium disabled:opacity-50"
-        >
+        <button type="button" onClick={approve} disabled={busy} className="btn btn-sm glass-success">
           {busy ? "…" : "Approve"}
         </button>
       </div>

@@ -30,7 +30,7 @@ export function AdminEventsTable({
 }) {
   if (events.length === 0) {
     return (
-      <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-10 text-center text-[var(--muted)]">
+      <div className="glass rounded-3xl p-10 text-center text-[var(--muted)]">
         No events yet.
       </div>
     );
@@ -83,25 +83,27 @@ function AdminEventRow({
     : `${formatPrice(publicPricePerPerson)}/person`;
 
   return (
-    <li className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5">
+    <li className="glass rounded-3xl p-5">
       <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
             <span>{formatDate(event.startsAt)}</span>
             <span
               className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium uppercase tracking-wide ${
-                event.isPrivate ? "bg-zinc-100 text-zinc-700" : "bg-[var(--accent)]/10 text-[var(--accent)]"
+                event.isPrivate
+                  ? "glass-soft text-zinc-700"
+                  : "bg-gradient-to-br from-indigo-500/15 to-violet-600/15 text-indigo-700 border border-white/40"
               }`}
             >
               {event.isPrivate ? "Private" : "Public"}
             </span>
             {event.status === "PENDING" && (
-              <span className="inline-flex items-center h-5 px-2 rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium uppercase tracking-wide">
+              <span className="glass-warn inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium uppercase tracking-wide">
                 Pending
               </span>
             )}
           </div>
-          <div className="font-medium mt-0.5">{event.title}</div>
+          <div className="font-semibold mt-0.5">{event.title}</div>
           <div className="text-sm text-[var(--muted)]">
             {event.gameName} · {event.seatsTaken}/{event.maxPeople} seats · {priceLabel}
             {event.location ? ` · ${event.location}` : ""} · hosted by{" "}
@@ -112,22 +114,17 @@ function AdminEventRow({
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="h-9 px-4 rounded-full border border-[var(--border)] text-sm hover:bg-black/5"
+            className="btn btn-sm glass glass-hover"
           >
             {open ? "Hide" : "Details"}
           </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={remove}
-            className="h-9 px-4 rounded-full bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 disabled:opacity-50"
-          >
+          <button type="button" disabled={busy} onClick={remove} className="btn btn-sm glass-danger">
             Delete
           </button>
         </div>
       </div>
       {open && (
-        <div className="mt-4 border-t border-[var(--border)] pt-4">
+        <div className="mt-4 border-t border-white/40 pt-4">
           {event.reservations.length === 0 ? (
             <div className="text-sm text-[var(--muted)]">No bookings yet.</div>
           ) : (

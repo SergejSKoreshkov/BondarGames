@@ -35,15 +35,12 @@ export default async function VerifyPage({
   }
 
   return (
-    <div className="max-w-sm mx-auto rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 text-sm space-y-3">
+    <div className="max-w-sm mx-auto glass-strong rounded-3xl p-6 text-sm space-y-3">
       {status === "ok" && (
         <>
           <div className="font-medium">Email verified</div>
           <p className="text-[var(--muted)]">You can now book a seat.</p>
-          <Link
-            href="/auth/signin"
-            className="inline-block h-10 px-4 leading-10 rounded-full bg-[var(--accent)] text-white font-medium"
-          >
+          <Link href="/auth/signin" className="btn glass-accent mt-1">
             Sign in
           </Link>
         </>
