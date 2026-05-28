@@ -28,8 +28,7 @@ export function CreateEventDialog({
   const [gameName, setGameName] = useState("");
   const [description, setDescription] = useState("");
   const [startsAt, setStartsAt] = useState(toLocalInputValue(initialStart));
-  const [durationHours, setDurationHours] = useState(2);
-  const [durationMins, setDurationMins] = useState(0);
+  const [duration, setDuration] = useState("02:00");
   const [maxPeople, setMaxPeople] = useState(6);
   const [people, setPeople] = useState(1);
   const [location, setLocation] = useState("");
@@ -45,7 +44,8 @@ export function CreateEventDialog({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const durationMinutes = durationHours * 60 + durationMins;
+  const [dh, dm] = duration.split(":").map((n) => parseInt(n, 10) || 0);
+  const durationMinutes = dh * 60 + dm;
   const cost = isPrivate ? privatePricePerEvent : publicPricePerPerson * people;
 
   async function submit(e: React.FormEvent) {
@@ -135,25 +135,13 @@ export function CreateEventDialog({
               onChange={(e) => setStartsAt(e.target.value)}
             />
           </Field>
-          <Field label="Duration (hours)">
+          <Field label="Duration (hh:mm)" full>
             <input
-              type="number"
+              type="time"
+              step={300}
               className="input"
-              min={0}
-              max={12}
-              value={durationHours}
-              onChange={(e) => setDurationHours(Number(e.target.value))}
-            />
-          </Field>
-          <Field label="Duration (minutes)">
-            <input
-              type="number"
-              className="input"
-              min={0}
-              max={59}
-              step={5}
-              value={durationMins}
-              onChange={(e) => setDurationMins(Number(e.target.value))}
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
             />
           </Field>
           <Field label="Max people">
