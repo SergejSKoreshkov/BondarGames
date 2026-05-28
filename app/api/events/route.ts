@@ -1,28 +1,56 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 
 export async function GET() {
+  const session = await auth();
+  const userId = session?.user?.id;
+  const isAdmin = session?.user?.role === "ADMIN";
+
   const events = await prisma.event.findMany({
     orderBy: { startsAt: "asc" },
     include: {
-      reservations: { select: { people: true } },
+      reservations: { select: { userId: true, people: true } },
       createdBy: { select: { id: true, name: true, email: true } },
     },
   });
-  const result = events.map((e) => ({
-    id: e.id,
-    title: e.title,
-    description: e.description,
-    gameName: e.gameName,
-    startsAt: e.startsAt.toISOString(),
-    durationMinutes: e.durationMinutes,
-    maxPeople: e.maxPeople,
-    location: e.location,
-    createdBy: e.createdBy,
-    seatsTaken: e.reservations.reduce((acc, r) => acc + r.people, 0),
-  }));
+
+  // Public events: full detail.
+  // Private events: blank out title/game/description/location for everyone except admin & creator.
+  const result = events.map((e) => {
+    const canSeePrivate = isAdmin || (userId && e.createdById === userId);
+    if (e.isPrivate && !canSeePrivate) {
+      return {
+        id: e.id,
+        title: null,
+        description: null,
+        gameName: null,
+        startsAt: e.startsAt.toISOString(),
+        durationMinutes: e.durationMinutes,
+        maxPeople: e.maxPeople,
+        location: null,
+        isPrivate: true,
+        createdBy: null,
+        seatsTaken: e.reservations.reduce((acc, r) => acc + r.people, 0),
+      };
+    }
+    return {
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      gameName: e.gameName,
+      startsAt: e.startsAt.toISOString(),
+      durationMinutes: e.durationMinutes,
+      maxPeople: e.maxPeople,
+      location: e.location,
+      isPrivate: e.isPrivate,
+      shareToken: canSeePrivate ? e.shareToken : null,
+      createdBy: e.createdBy,
+      seatsTaken: e.reservations.reduce((acc, r) => acc + r.people, 0),
+    };
+  });
   return NextResponse.json(result);
 }
 
@@ -35,6 +63,7 @@ const createSchema = z.object({
   maxPeople: z.number().int().min(1).max(100),
   location: z.string().max(200).optional().nullable(),
   people: z.number().int().min(1).max(20).default(1),
+  isPrivate: z.boolean().default(false),
 });
 
 export async function POST(req: Request) {
@@ -59,10 +88,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Your seats exceed max capacity" }, { status: 400 });
   }
   const endsAt = new Date(startsAt.getTime() + parsed.data.durationMinutes * 60_000);
+  const shareToken = parsed.data.isPrivate ? randomBytes(16).toString("hex") : null;
 
   try {
     const event = await prisma.$transaction(async (tx) => {
-      // Overlap check: any existing event whose [start, end) intersects [startsAt, endsAt).
       const conflicts = await tx.$queryRaw<{ id: string }[]>`
         SELECT "id" FROM "Event"
         WHERE "startsAt" < ${endsAt}
@@ -81,6 +110,8 @@ export async function POST(req: Request) {
           durationMinutes: parsed.data.durationMinutes,
           maxPeople: parsed.data.maxPeople,
           location: parsed.data.location ?? null,
+          isPrivate: parsed.data.isPrivate,
+          shareToken,
           createdById: session.user.id,
         },
       });
@@ -93,7 +124,10 @@ export async function POST(req: Request) {
       });
       return created;
     });
-    return NextResponse.json(event, { status: 201 });
+    return NextResponse.json(
+      { id: event.id, isPrivate: event.isPrivate, shareToken: event.shareToken },
+      { status: 201 },
+    );
   } catch (err) {
     if (err instanceof Error && err.message === "OVERLAP") {
       return NextResponse.json(

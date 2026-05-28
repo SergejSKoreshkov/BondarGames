@@ -3,12 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function AdminSettingsForm({ initial }: { initial: number }) {
-  const [price, setPrice] = useState(initial);
+export function AdminSettingsForm({
+  initialPublic,
+  initialPrivate,
+}: {
+  initialPublic: number;
+  initialPrivate: number;
+}) {
+  const [pub, setPub] = useState(initialPublic);
+  const [priv, setPriv] = useState(initialPrivate);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const router = useRouter();
+
+  const dirty = pub !== initialPublic || priv !== initialPrivate;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -18,7 +27,7 @@ export function AdminSettingsForm({ initial }: { initial: number }) {
     const res = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pricePerPerson: Number(price) }),
+      body: JSON.stringify({ publicPricePerPerson: Number(pub), privatePricePerEvent: Number(priv) }),
     });
     setBusy(false);
     if (!res.ok) {
@@ -31,28 +40,42 @@ export function AdminSettingsForm({ initial }: { initial: number }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex items-end gap-3">
-      <label className="block flex-1 max-w-[200px]">
+    <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+      <label className="block">
         <span className="block text-xs font-medium text-[var(--muted)] mb-1.5">
-          Price per person (€)
+          Public · per person (€)
         </span>
         <input
           type="number"
           min={0}
-          value={price}
-          onChange={(e) => setPrice(Number(e.target.value))}
+          value={pub}
+          onChange={(e) => setPub(Number(e.target.value))}
           className="w-full h-11 px-3 rounded-2xl border border-[var(--border)] bg-white text-sm outline-none focus:border-[var(--accent)]"
         />
       </label>
-      <button
-        type="submit"
-        disabled={busy || price === initial}
-        className="h-11 px-5 rounded-full bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50"
-      >
-        {busy ? "Saving…" : "Save"}
-      </button>
-      {saved && <span className="text-xs text-emerald-600">Saved.</span>}
-      {error && <span className="text-xs text-red-500">{error}</span>}
+      <label className="block">
+        <span className="block text-xs font-medium text-[var(--muted)] mb-1.5">
+          Private · flat per event (€)
+        </span>
+        <input
+          type="number"
+          min={0}
+          value={priv}
+          onChange={(e) => setPriv(Number(e.target.value))}
+          className="w-full h-11 px-3 rounded-2xl border border-[var(--border)] bg-white text-sm outline-none focus:border-[var(--accent)]"
+        />
+      </label>
+      <div className="flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={busy || !dirty}
+          className="h-11 px-5 rounded-full bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50"
+        >
+          {busy ? "Saving…" : "Save"}
+        </button>
+        {saved && <span className="text-xs text-emerald-600">Saved.</span>}
+        {error && <span className="text-xs text-red-500">{error}</span>}
+      </div>
     </form>
   );
 }

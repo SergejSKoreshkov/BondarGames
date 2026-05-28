@@ -12,6 +12,7 @@ type AdminEvent = {
   durationMinutes: number;
   maxPeople: number;
   location: string | null;
+  isPrivate: boolean;
   createdBy: { name: string | null; email: string };
   seatsTaken: number;
   reservations: { id: string; people: number; user: { name: string | null; email: string } }[];
@@ -19,10 +20,12 @@ type AdminEvent = {
 
 export function AdminEventsTable({
   events,
-  pricePerPerson,
+  publicPricePerPerson,
+  privatePricePerEvent,
 }: {
   events: AdminEvent[];
-  pricePerPerson: number;
+  publicPricePerPerson: number;
+  privatePricePerEvent: number;
 }) {
   if (events.length === 0) {
     return (
@@ -34,7 +37,12 @@ export function AdminEventsTable({
   return (
     <ul className="grid gap-3">
       {events.map((e) => (
-        <AdminEventRow key={e.id} event={e} pricePerPerson={pricePerPerson} />
+        <AdminEventRow
+          key={e.id}
+          event={e}
+          publicPricePerPerson={publicPricePerPerson}
+          privatePricePerEvent={privatePricePerEvent}
+        />
       ))}
     </ul>
   );
@@ -42,10 +50,12 @@ export function AdminEventsTable({
 
 function AdminEventRow({
   event,
-  pricePerPerson,
+  publicPricePerPerson,
+  privatePricePerEvent,
 }: {
   event: AdminEvent;
-  pricePerPerson: number;
+  publicPricePerPerson: number;
+  privatePricePerEvent: number;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -67,34 +77,48 @@ function AdminEventRow({
     if (res.ok) router.refresh();
   }
 
+  const priceLabel = event.isPrivate
+    ? `${formatPrice(privatePricePerEvent)} flat`
+    : `${formatPrice(publicPricePerPerson)}/person`;
+
   return (
     <li className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
         <div className="flex-1 min-w-0">
-          <div className="text-xs text-[var(--muted)]">{formatDate(event.startsAt)}</div>
-          <div className="font-medium">{event.title}</div>
+          <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+            <span>{formatDate(event.startsAt)}</span>
+            <span
+              className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium uppercase tracking-wide ${
+                event.isPrivate ? "bg-zinc-100 text-zinc-700" : "bg-[var(--accent)]/10 text-[var(--accent)]"
+              }`}
+            >
+              {event.isPrivate ? "Private" : "Public"}
+            </span>
+          </div>
+          <div className="font-medium mt-0.5">{event.title}</div>
           <div className="text-sm text-[var(--muted)]">
-            {event.gameName} · {event.seatsTaken}/{event.maxPeople} seats ·{" "}
-            {formatPrice(pricePerPerson)}/person
+            {event.gameName} · {event.seatsTaken}/{event.maxPeople} seats · {priceLabel}
             {event.location ? ` · ${event.location}` : ""} · hosted by{" "}
             {event.createdBy.name ?? event.createdBy.email}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="h-9 px-4 rounded-full border border-[var(--border)] text-sm hover:bg-black/5"
-        >
-          {open ? "Hide" : "Details"}
-        </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={remove}
-          className="h-9 px-4 rounded-full bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 disabled:opacity-50"
-        >
-          Delete
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="h-9 px-4 rounded-full border border-[var(--border)] text-sm hover:bg-black/5"
+          >
+            {open ? "Hide" : "Details"}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={remove}
+            className="h-9 px-4 rounded-full bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 disabled:opacity-50"
+          >
+            Delete
+          </button>
+        </div>
       </div>
       {open && (
         <div className="mt-4 border-t border-[var(--border)] pt-4">
@@ -104,14 +128,16 @@ function AdminEventRow({
             <ul className="space-y-2">
               {event.reservations.map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-3 text-sm">
-                  <div>
-                    <span className="font-medium">{r.user.name ?? r.user.email}</span>{" "}
+                  <div className="min-w-0">
+                    <span className="font-medium truncate">
+                      {r.user.name ?? r.user.email}
+                    </span>{" "}
                     <span className="text-[var(--muted)]">— {r.people} seat(s)</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => removeReservation(r.id)}
-                    className="text-xs text-red-600 hover:underline"
+                    className="text-xs text-red-600 hover:underline shrink-0"
                   >
                     Remove
                   </button>

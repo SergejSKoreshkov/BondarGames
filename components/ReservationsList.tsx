@@ -13,6 +13,7 @@ type Reservation = {
     gameName: string;
     startsAt: string;
     location: string | null;
+    isPrivate: boolean;
   };
 };
 
@@ -20,10 +21,12 @@ const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
 export function ReservationsList({
   reservations,
-  pricePerPerson,
+  publicPricePerPerson,
+  privatePricePerEvent,
 }: {
   reservations: Reservation[];
-  pricePerPerson: number;
+  publicPricePerPerson: number;
+  privatePricePerEvent: number;
 }) {
   if (reservations.length === 0) {
     return (
@@ -35,13 +38,26 @@ export function ReservationsList({
   return (
     <ul className="grid gap-3">
       {reservations.map((r) => (
-        <Row key={r.id} r={r} pricePerPerson={pricePerPerson} />
+        <Row
+          key={r.id}
+          r={r}
+          publicPricePerPerson={publicPricePerPerson}
+          privatePricePerEvent={privatePricePerEvent}
+        />
       ))}
     </ul>
   );
 }
 
-function Row({ r, pricePerPerson }: { r: Reservation; pricePerPerson: number }) {
+function Row({
+  r,
+  publicPricePerPerson,
+  privatePricePerEvent,
+}: {
+  r: Reservation;
+  publicPricePerPerson: number;
+  privatePricePerEvent: number;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -50,6 +66,7 @@ function Row({ r, pricePerPerson }: { r: Reservation; pricePerPerson: number }) 
   const msUntil = startsAtMs - Date.now();
   const cancellable = msUntil > TWENTY_FOUR_HOURS_MS;
   const past = startsAtMs < Date.now();
+  const total = r.event.isPrivate ? privatePricePerEvent : publicPricePerPerson * r.people;
 
   async function cancel() {
     if (!confirm("Cancel this booking?")) return;
@@ -66,13 +83,20 @@ function Row({ r, pricePerPerson }: { r: Reservation; pricePerPerson: number }) 
   }
 
   return (
-    <li className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 flex items-center gap-5">
+    <li className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
       <div className="flex-1 min-w-0">
-        <div className="text-xs text-[var(--muted)]">{formatDate(r.event.startsAt)}</div>
-        <div className="font-medium">{r.event.title}</div>
+        <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+          <span>{formatDate(r.event.startsAt)}</span>
+          {r.event.isPrivate && (
+            <span className="inline-flex h-5 px-2 items-center rounded-full bg-zinc-100 text-zinc-700 text-[10px] font-medium uppercase tracking-wide">
+              Private
+            </span>
+          )}
+        </div>
+        <div className="font-medium mt-0.5">{r.event.title}</div>
         <div className="text-sm text-[var(--muted)]">
-          {r.event.gameName} · {r.people} {r.people === 1 ? "seat" : "seats"} ·{" "}
-          {formatPrice(pricePerPerson * r.people)}
+          {r.event.gameName} · {r.people} {r.people === 1 ? "seat" : "seats"} · {formatPrice(total)}
+          {r.event.isPrivate && " flat"}
         </div>
         {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
       </div>
@@ -83,12 +107,12 @@ function Row({ r, pricePerPerson }: { r: Reservation; pricePerPerson: number }) 
           type="button"
           disabled={busy}
           onClick={cancel}
-          className="h-9 px-4 rounded-full border border-[var(--border)] text-sm hover:bg-black/5 disabled:opacity-50"
+          className="h-9 px-4 rounded-full border border-[var(--border)] text-sm hover:bg-black/5 disabled:opacity-50 self-start sm:self-auto"
         >
           {busy ? "…" : "Cancel"}
         </button>
       ) : (
-        <span className="text-xs text-amber-600 max-w-[120px] text-right">
+        <span className="text-xs text-amber-600 sm:max-w-[120px] sm:text-right">
           Within 24h — cancellation closed
         </span>
       )}

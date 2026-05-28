@@ -6,11 +6,15 @@ import { getSettings } from "@/lib/settings";
 
 export async function GET() {
   const s = await getSettings();
-  return NextResponse.json({ pricePerPerson: s.pricePerPerson });
+  return NextResponse.json({
+    publicPricePerPerson: s.publicPricePerPerson,
+    privatePricePerEvent: s.privatePricePerEvent,
+  });
 }
 
 const schema = z.object({
-  pricePerPerson: z.number().int().min(0).max(100000),
+  publicPricePerPerson: z.number().int().min(0).max(100000),
+  privatePricePerEvent: z.number().int().min(0).max(1_000_000),
 });
 
 export async function PUT(req: Request) {
@@ -25,8 +29,11 @@ export async function PUT(req: Request) {
   }
   const row = await prisma.settings.upsert({
     where: { id: 1 },
-    update: { pricePerPerson: parsed.data.pricePerPerson },
-    create: { id: 1, pricePerPerson: parsed.data.pricePerPerson },
+    update: parsed.data,
+    create: { id: 1, ...parsed.data },
   });
-  return NextResponse.json({ pricePerPerson: row.pricePerPerson });
+  return NextResponse.json({
+    publicPricePerPerson: row.publicPricePerPerson,
+    privatePricePerEvent: row.privatePricePerEvent,
+  });
 }

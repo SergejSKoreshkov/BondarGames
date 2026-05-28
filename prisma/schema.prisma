@@ -67,6 +67,8 @@ model Event {
   durationMinutes Int       @default(120)
   maxPeople       Int
   location        String?
+  isPrivate       Boolean   @default(false)
+  shareToken      String?   @unique
   createdById     String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -79,9 +81,10 @@ model Event {
 }
 
 model Settings {
-  id              Int      @id @default(1)
-  pricePerPerson  Int      @default(10)
-  updatedAt       DateTime @updatedAt
+  id                    Int      @id @default(1)
+  publicPricePerPerson  Int      @default(10)
+  privatePricePerEvent  Int      @default(100)
+  updatedAt             DateTime @updatedAt
 }
 
 model Reservation {

@@ -38,10 +38,11 @@ export async function sendReservationEmail(
   to: string,
   event: { title: string; startsAt: Date; location: string | null },
   people: number,
-  pricePerPerson: number,
+  price: number,
+  isPrivate: boolean,
 ) {
   const transport = getTransport();
-  const total = people * pricePerPerson;
+  const total = isPrivate ? price : people * price;
   await transport.sendMail({
     from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
     to,

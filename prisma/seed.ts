@@ -7,7 +7,7 @@ async function main() {
   await prisma.settings.upsert({
     where: { id: 1 },
     update: {},
-    create: { id: 1, pricePerPerson: 10 },
+    create: { id: 1, publicPricePerPerson: 10, privatePricePerEvent: 100 },
   });
   console.log("Seeded settings");
 

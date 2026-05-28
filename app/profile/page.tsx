@@ -28,6 +28,7 @@ export default async function ProfilePage() {
       gameName: r.event.gameName,
       startsAt: r.event.startsAt.toISOString(),
       location: r.event.location,
+      isPrivate: r.event.isPrivate,
     },
   }));
 
@@ -42,7 +43,11 @@ export default async function ProfilePage() {
           )}
         </p>
       </section>
-      <ReservationsList reservations={data} pricePerPerson={settings.pricePerPerson} />
+      <ReservationsList
+        reservations={data}
+        publicPricePerPerson={settings.publicPricePerPerson}
+        privatePricePerEvent={settings.privatePricePerEvent}
+      />
     </div>
   );
 }

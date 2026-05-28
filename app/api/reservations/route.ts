@@ -8,6 +8,7 @@ import { getSettings } from "@/lib/settings";
 const schema = z.object({
   eventId: z.string().min(1),
   people: z.number().int().min(1).max(20),
+  shareToken: z.string().optional(),
 });
 
 export async function GET() {
@@ -52,6 +53,14 @@ export async function POST(req: Request) {
   if (event.startsAt < new Date()) {
     return NextResponse.json({ error: "Event has already started" }, { status: 400 });
   }
+  if (event.isPrivate) {
+    const isHost = event.createdById === session.user.id;
+    const isAdmin = session.user.role === "ADMIN";
+    const hasToken = parsed.data.shareToken && parsed.data.shareToken === event.shareToken;
+    if (!isHost && !isAdmin && !hasToken) {
+      return NextResponse.json({ error: "Private event requires an invite link" }, { status: 403 });
+    }
+  }
 
   const seatsTaken = event.reservations.reduce((acc, r) => acc + r.people, 0);
   if (seatsTaken + parsed.data.people > event.maxPeople) {
@@ -73,9 +82,14 @@ export async function POST(req: Request) {
 
   if (session.user.email) {
     const settings = await getSettings();
-    sendReservationEmail(session.user.email, event, parsed.data.people, settings.pricePerPerson).catch(
-      (e) => console.error("reservation email failed", e),
-    );
+    const price = event.isPrivate ? settings.privatePricePerEvent : settings.publicPricePerPerson;
+    sendReservationEmail(
+      session.user.email,
+      event,
+      parsed.data.people,
+      price,
+      event.isPrivate,
+    ).catch((e) => console.error("reservation email failed", e));
   }
 
   return NextResponse.json(reservation, { status: 201 });

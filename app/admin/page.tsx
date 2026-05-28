@@ -33,6 +33,7 @@ export default async function AdminPage() {
     durationMinutes: e.durationMinutes,
     maxPeople: e.maxPeople,
     location: e.location,
+    isPrivate: e.isPrivate,
     createdBy: e.createdBy,
     reservations: e.reservations.map((r) => ({
       id: r.id,
@@ -52,13 +53,20 @@ export default async function AdminPage() {
       </section>
 
       <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-        <h2 className="text-lg font-semibold mb-4">Global price</h2>
-        <AdminSettingsForm initial={settings.pricePerPerson} />
+        <h2 className="text-lg font-semibold mb-4">Pricing</h2>
+        <AdminSettingsForm
+          initialPublic={settings.publicPricePerPerson}
+          initialPrivate={settings.privatePricePerEvent}
+        />
       </section>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">All events</h2>
-        <AdminEventsTable events={data} pricePerPerson={settings.pricePerPerson} />
+        <AdminEventsTable
+          events={data}
+          publicPricePerPerson={settings.publicPricePerPerson}
+          privatePricePerEvent={settings.privatePricePerEvent}
+        />
       </section>
     </div>
   );
