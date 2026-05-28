@@ -95,9 +95,11 @@ export function Schedule({
       {/* Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <WeekNav weekStart={weekStart} onChange={setWeekStart} />
-        <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
-          <Legend swatch="bg-gradient-to-br from-indigo-500 to-violet-600" label={`${formatPrice(publicPricePerPerson)}/pp`} />
-          <Legend swatch="bg-gradient-to-br from-zinc-400 to-zinc-500" label={`${formatPrice(privatePricePerEvent)} flat`} />
+        <div className="flex items-center gap-4 text-xs text-[var(--muted)]">
+          <div className="hidden sm:flex items-center gap-3">
+            <Legend swatch="bg-gradient-to-br from-indigo-500 to-violet-600" label={`${formatPrice(publicPricePerPerson)} pp`} />
+            <Legend swatch="bg-gradient-to-br from-zinc-400 to-zinc-500" label={`${formatPrice(privatePricePerEvent)} flat`} />
+          </div>
           {canBook && emailVerified ? (
             <button type="button" onClick={() => openCreate()} className="btn btn-sm glass-accent">
               Host a game
@@ -113,11 +115,11 @@ export function Schedule({
       </div>
 
       {/* Week grid */}
-      <div className="glass rounded-3xl overflow-hidden">
+      <div className="schedule-surface rounded-3xl overflow-hidden">
         {/* Day headers */}
         <div
-          className="grid border-b border-white/40 text-xs bg-white/30"
-          style={{ gridTemplateColumns: "44px repeat(7, minmax(0, 1fr))" }}
+          className="grid border-b border-white/50 text-xs bg-white/30"
+          style={{ gridTemplateColumns: "48px repeat(7, minmax(0, 1fr))" }}
         >
           <div />
           {days.map((d) => {
@@ -150,16 +152,16 @@ export function Schedule({
         <div
           className="grid relative"
           style={{
-            gridTemplateColumns: "44px repeat(7, minmax(0, 1fr))",
+            gridTemplateColumns: "48px repeat(7, minmax(0, 1fr))",
             height: HOUR_HEIGHT * 24,
           }}
         >
           {/* Time column */}
-          <div className="relative border-r border-white/40">
+          <div className="relative border-r border-white/50">
             {HOURS.map((h) => (
               <div
                 key={h}
-                className="absolute left-0 right-0 text-[10px] text-[var(--muted)] font-mono pr-1 text-right"
+                className="absolute left-0 right-0 text-[10px] text-[var(--muted)] font-mono pr-2 text-right select-none"
                 style={{ top: h * HOUR_HEIGHT - 6 }}
               >
                 {fmtHourLabel(h)}
@@ -224,8 +226,8 @@ export function Schedule({
 
 function Legend({ swatch, label }: { swatch: string; label: string }) {
   return (
-    <span className="hidden sm:inline-flex items-center gap-1.5">
-      <span className={`h-2.5 w-2.5 rounded-full ${swatch}`} />
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`h-2.5 w-2.5 rounded-full ${swatch} shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]`} />
       {label}
     </span>
   );
@@ -305,14 +307,16 @@ function DayColumn({
   isLast: boolean;
 }) {
   return (
-    <div className={`relative ${isLast ? "" : "border-r border-white/40"}`}>
+    <div className={`relative ${isLast ? "" : "border-r border-white/50"}`}>
       {/* Hour rows (background grid) */}
       {HOURS.map((h) => (
         <button
           key={h}
           type="button"
           onClick={() => onEmptyClick(h)}
-          className="absolute left-0 right-0 border-t border-white/30 hover:bg-white/30 transition-colors"
+          className={`absolute left-0 right-0 hover:bg-white/40 transition-colors ${
+            h === 0 ? "" : "border-t border-white/40"
+          }`}
           style={{ top: h * HOUR_HEIGHT, height: HOUR_HEIGHT }}
           aria-label={`${fmtHourLabel(h)} on ${day.toDateString()}`}
         />
@@ -325,17 +329,17 @@ function DayColumn({
         const height = Math.max((e.durationMinutes / 60) * HOUR_HEIGHT - 2, 18);
         const pending = e.status === "PENDING";
         const blockClasses = pending
-          ? "bg-gradient-to-br from-amber-200/85 to-amber-300/80 text-amber-900 border border-amber-400/60 border-dashed shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_4px_10px_-3px_rgba(180,83,9,0.25)] hover:from-amber-200 hover:to-amber-300"
+          ? "bg-gradient-to-br from-amber-200/90 to-amber-300/85 text-amber-900 border border-amber-400/65 border-dashed shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_12px_-3px_rgba(180,83,9,0.25)] hover:from-amber-200 hover:to-amber-300"
           : e.isPrivate
-            ? "bg-gradient-to-br from-zinc-400/85 to-zinc-500/85 text-white border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_10px_-3px_rgba(15,23,42,0.25)] hover:brightness-105"
-            : "bg-gradient-to-br from-indigo-500/90 to-violet-600/90 text-white border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_6px_14px_-4px_rgba(67,56,202,0.45)] hover:brightness-110";
+            ? "bg-gradient-to-br from-zinc-400/85 to-zinc-500/90 text-white border border-white/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_6px_14px_-4px_rgba(15,23,42,0.28)] hover:brightness-105"
+            : "bg-gradient-to-br from-indigo-500 to-violet-600 text-white border border-white/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_8px_18px_-5px_rgba(79,70,229,0.5)] hover:brightness-110";
         const label = pending && !e.title ? "Pending" : e.isPrivate && !e.title ? "Private" : e.title;
         return (
           <button
             type="button"
             key={e.id}
             onClick={() => onEventClick(e)}
-            className={`absolute left-0.5 right-0.5 rounded-lg text-[10px] sm:text-xs px-1.5 py-1 text-left overflow-hidden transition ${blockClasses}`}
+            className={`absolute left-1 right-1 rounded-[10px] text-[10px] sm:text-xs px-2 py-1 text-left overflow-hidden transition ${blockClasses}`}
             style={{ top, height }}
           >
             <div className="font-semibold truncate leading-tight">{label}</div>
@@ -454,7 +458,7 @@ function EventDetailDialog({
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-40 bg-slate-900/15 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div
@@ -610,7 +614,7 @@ function CreatedDialog({
   }
   return (
     <div
-      className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-40 bg-slate-900/15 backdrop-blur-[2px] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>

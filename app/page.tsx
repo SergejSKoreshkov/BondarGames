@@ -46,10 +46,12 @@ export default async function Home() {
   });
 
   return (
-    <div className="space-y-10">
-      <section className="space-y-3">
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Board game nights</h1>
-        <p className="text-[var(--muted)] max-w-xl text-sm sm:text-base">
+    <div className="space-y-8">
+      <section className="space-y-2.5">
+        <h1 className="text-[28px] sm:text-[36px] font-semibold tracking-[-0.02em] leading-[1.05]">
+          Board game nights
+        </h1>
+        <p className="text-[var(--muted)] max-w-xl text-sm sm:text-[15px] leading-relaxed">
           See who's playing, grab a seat, or host your own session — public or private.
         </p>
       </section>

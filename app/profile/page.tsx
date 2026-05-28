@@ -35,12 +35,14 @@ export default async function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      <section>
-        <h1 className="text-3xl font-semibold tracking-tight">My bookings</h1>
-        <p className="text-[var(--muted)] mt-1 text-sm">
-          Signed in as {session.user.email}
+      <section className="space-y-2.5">
+        <h1 className="text-[28px] sm:text-[36px] font-semibold tracking-[-0.02em] leading-[1.05]">
+          My bookings
+        </h1>
+        <p className="text-[var(--muted)] text-sm">
+          Signed in as <span className="text-[var(--foreground)]/80">{session.user.email}</span>
           {!session.user.emailVerified && (
-            <span className="ml-2 text-amber-600">· email not verified</span>
+            <span className="ml-2 text-amber-700">· email not verified</span>
           )}
         </p>
       </section>

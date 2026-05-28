@@ -49,9 +49,11 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-10">
-      <section>
-        <h1 className="text-3xl font-semibold tracking-tight">Admin</h1>
-        <p className="text-[var(--muted)] mt-1 text-sm">
+      <section className="space-y-2.5">
+        <h1 className="text-[28px] sm:text-[36px] font-semibold tracking-[-0.02em] leading-[1.05]">
+          Admin
+        </h1>
+        <p className="text-[var(--muted)] text-sm">
           Approve pending events, set pricing, oversee every booking.
         </p>
       </section>

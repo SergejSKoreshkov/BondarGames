@@ -91,7 +91,7 @@ export function CreateEventDialog({
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-40 bg-slate-900/15 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div
