@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BondarGames
 
-## Getting Started
+A minimalistic board game reservation app — Next.js 16 (App Router) + Tailwind + Prisma + Neon Postgres + NextAuth v5 + nodemailer.
 
-First, run the development server:
+Public visitors can see the schedule. Registered & email-verified users can book seats and cancel up to 24 hours before the event. Admins can create and delete events at any time.
+
+## Stack
+
+- **Framework:** Next.js 16 (Turbopack) + React 19, App Router
+- **Styling:** Tailwind 4, minimalistic Revolut-inspired light theme
+- **Database:** Postgres via Neon (Vercel-native); Prisma 7 with the `@prisma/adapter-pg` driver adapter (serverless-friendly)
+- **Auth:** NextAuth v5 — Google OAuth + local email/password, JWT session strategy
+- **Email:** nodemailer over Gmail SMTP (App Password)
+
+## Local setup
 
 ```bash
+npm install
+cp .env.example .env  # then fill in values
+# Provision a Postgres database (Neon) and paste DATABASE_URL / DIRECT_URL into .env
+npm run db:migrate    # apply the schema
+npm run db:seed       # optional — creates an admin from ADMIN_EMAIL/ADMIN_PASSWORD + a sample event
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Required environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See `.env.example`. Briefly:
 
-## Learn More
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL`, `DIRECT_URL` | Neon Postgres pooled + direct URLs (Migrate needs the direct URL) |
+| `AUTH_SECRET` | NextAuth session secret (`openssl rand -base64 32`) |
+| `AUTH_URL`, `AUTH_TRUST_HOST` | NextAuth canonical URL and trust flag |
+| `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` | Google OAuth credentials |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Gmail SMTP (use a Google App Password) |
+| `APP_URL` | Base URL used in verification email links |
+| `ADMIN_EMAIL` | The first user signing up with this email gets the `ADMIN` role |
 
-To learn more about Next.js, take a look at the following resources:
+## Google OAuth setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Create OAuth credentials at https://console.cloud.google.com → APIs & Services → Credentials.
+2. Authorized JavaScript origins: `http://localhost:3000`, your Vercel URL.
+3. Authorized redirect URI: `${AUTH_URL}/api/auth/callback/google`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Gmail SMTP setup
 
-## Deploy on Vercel
+1. Enable 2-Step Verification on the Google account.
+2. Create an App Password at https://myaccount.google.com/apppasswords.
+3. Use that 16-character password as `SMTP_PASSWORD`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Vercel deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Create a Vercel project from this repo.
+2. From **Storage → Create Database**, attach a **Neon Postgres** database. It auto-injects `DATABASE_URL` and `DIRECT_URL` into the project's env vars.
+3. Set the rest of the env vars (Auth, Google, SMTP, `APP_URL` → your deployment URL).
+4. Vercel runs `npm run build`, which runs `prisma generate && next build`. Run `npm run db:deploy` from your local terminal (against the Vercel-provided URLs) for the first migration, or wire it into the build command.
+5. Push to deploy.
+
+## Rules baked into the app
+
+- Unauthenticated visitors can view the schedule but cannot book.
+- Local signups must verify their email via a tokenised confirmation link before booking. Google signups are pre-verified.
+- A reservation can include 1–N seats up to the remaining capacity of the event.
+- Users can cancel **only up to 24 hours before** the event's start.
+- Admins can delete any event or any reservation at any time.
+
+## Project layout
+
+```
+app/
+  api/                 REST routes (auth, signup, verify, events, reservations)
+  auth/                Sign in / sign up / verify pages
+  admin/               Admin dashboard
+  profile/             User's bookings
+  page.tsx             Public schedule
+components/            UI components
+lib/
+  db.ts                Prisma client (driver adapter)
+  mailer.ts            Nodemailer transport + templates
+  tokens.ts            Verification token helpers
+  format.ts            Date / currency formatting
+prisma/
+  schema.prisma        Models: User, Account, VerificationToken, Event, Reservation
+  seed.ts              Optional admin + sample event
+auth.ts                NextAuth v5 config
+prisma.config.ts       Prisma 7 datasource config
+```
