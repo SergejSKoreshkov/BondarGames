@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { Glass } from "@/components/Glass";
 
 export function SignUpForm() {
   const [name, setName] = useState("");
@@ -32,20 +33,23 @@ export function SignUpForm() {
 
   if (done) {
     return (
-      <div className="glass-strong rounded-3xl p-6 text-sm space-y-2">
-        <div className="font-medium">Check your inbox</div>
-        <p className="text-[var(--muted)]">
-          We sent a confirmation link to <b>{email}</b>. Click it to verify your email, then sign in.
-        </p>
-        <Link href="/auth/signin" className="inline-block mt-2 text-[var(--foreground)] font-medium">
-          Go to sign in →
-        </Link>
-      </div>
+      <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+        <div className="text-sm space-y-2">
+          <div className="font-medium">Check your inbox</div>
+          <p className="text-[var(--muted)]">
+            We sent a confirmation link to <b>{email}</b>. Click it to verify your email, then sign in.
+          </p>
+          <Link href="/auth/signin" className="inline-block mt-2 text-[var(--foreground)] font-medium">
+            Go to sign in →
+          </Link>
+        </div>
+      </Glass>
     );
   }
 
   return (
-    <div className="glass-strong rounded-3xl p-6 space-y-4">
+    <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+    <div className="space-y-4">
       <button
         type="button"
         onClick={() => signIn("google", { callbackUrl: "/" })}
@@ -101,6 +105,7 @@ export function SignUpForm() {
         </Link>
       </p>
     </div>
+    </Glass>
   );
 }
 

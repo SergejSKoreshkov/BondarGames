@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { Glass } from "@/components/Glass";
 
 export function SignInForm() {
   const [email, setEmail] = useState("");
@@ -29,7 +30,8 @@ export function SignInForm() {
   }
 
   return (
-    <div className="glass-strong rounded-3xl p-6 space-y-4">
+    <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+    <div className="space-y-4">
       <button
         type="button"
         onClick={() => signIn("google", { callbackUrl: "/" })}
@@ -79,6 +81,7 @@ export function SignInForm() {
         </Link>
       </p>
     </div>
+    </Glass>
   );
 }
 

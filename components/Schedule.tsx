@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/format";
 import { addDays, isoDateInputValue, sameDay, startOfWeek } from "@/lib/week";
 import { CreateEventDialog } from "@/components/CreateEventDialog";
+import { Glass } from "@/components/Glass";
 
 export type ScheduleEvent = {
   id: string;
@@ -457,9 +458,11 @@ function EventDetailDialog({
       onClick={onClose}
     >
       <div
-        className="glass-strong rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 space-y-4"
+        className="w-full sm:max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
+        <Glass cornerRadius={28} padding="24px" displacementScale={80} aberrationIntensity={2.4}>
+        <div className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-xs text-[var(--muted)] font-mono">
@@ -580,6 +583,8 @@ function EventDetailDialog({
             </Link>
           )}
         </div>
+        </div>
+        </Glass>
       </div>
     </div>
   );
@@ -608,10 +613,9 @@ function CreatedDialog({
       className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
-      <div
-        className="glass-strong rounded-3xl w-full max-w-sm p-6 space-y-3"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <Glass cornerRadius={28} padding="24px" displacementScale={75} aberrationIntensity={2.4}>
+        <div className="space-y-3">
         <h2 className="text-lg font-semibold">
           {status === "PENDING" ? "Submitted for approval" : "Event created"}
         </h2>
@@ -647,6 +651,8 @@ function CreatedDialog({
             Done
           </button>
         </div>
+        </div>
+        </Glass>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/format";
+import { Glass } from "@/components/Glass";
 
 function toLocalInputValue(d: Date) {
   const tzOffset = d.getTimezoneOffset() * 60_000;
@@ -94,9 +95,10 @@ export function CreateEventDialog({
       onClick={onClose}
     >
       <div
-        className="glass-strong rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 max-h-[95vh] overflow-y-auto"
+        className="w-full sm:max-w-md max-h-[95vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
+        <Glass cornerRadius={28} padding="24px" displacementScale={80} aberrationIntensity={2.4}>
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold">Host a game</h2>
@@ -211,6 +213,7 @@ export function CreateEventDialog({
             </button>
           </div>
         </form>
+        </Glass>
       </div>
     </div>
   );

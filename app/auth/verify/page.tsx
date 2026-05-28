@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { Glass } from "@/components/Glass";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,9 @@ export default async function VerifyPage({
   }
 
   return (
-    <div className="max-w-sm mx-auto glass-strong rounded-3xl p-6 text-sm space-y-3">
+    <div className="max-w-sm mx-auto">
+    <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+    <div className="text-sm space-y-3">
       {status === "ok" && (
         <>
           <div className="font-medium">Email verified</div>
@@ -60,6 +63,8 @@ export default async function VerifyPage({
           <p className="text-[var(--muted)]">Open the link from your confirmation email.</p>
         </>
       )}
+    </div>
+    </Glass>
     </div>
   );
 }

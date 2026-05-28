@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { formatDate, formatPrice } from "@/lib/format";
 import { PrivateEventBooking } from "@/components/PrivateEventBooking";
+import { Glass } from "@/components/Glass";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,8 @@ export default async function PrivateEventPage({
         <h1 className="text-2xl font-semibold tracking-tight">{event.title}</h1>
       </div>
 
-      <div className="glass-strong rounded-3xl p-6 space-y-3">
+      <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+      <div className="space-y-3">
         <dl className="text-sm grid grid-cols-3 gap-y-2">
           <dt className="text-[var(--muted)] col-span-1">When</dt>
           <dd className="col-span-2">
@@ -66,11 +68,12 @@ export default async function PrivateEventPage({
           </dd>
         </dl>
         {event.description && (
-          <p className="text-sm text-[var(--muted)] pt-2 border-t border-[var(--border)]">
+          <p className="text-sm text-[var(--muted)] pt-2 border-t border-white/40">
             {event.description}
           </p>
         )}
       </div>
+      </Glass>
 
       {event.status === "PENDING" ? (
         <div className="glass-warn rounded-2xl px-5 py-4 text-sm text-center">
