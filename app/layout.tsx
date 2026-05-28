@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { LiquidFilters } from "@/components/LiquidFilters";
 import { auth } from "@/auth";
 
 const geist = Geist({
@@ -22,6 +23,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col text-[var(--foreground)]">
+        <LiquidFilters />
         <SessionProvider session={session}>
           <Header />
           <main className="flex-1 mx-auto w-full max-w-5xl px-5 sm:px-8 py-8 sm:py-12">{children}</main>

@@ -97,8 +97,8 @@ export function Schedule({
         <WeekNav weekStart={weekStart} onChange={setWeekStart} />
         <div className="flex items-center gap-4 text-xs text-[var(--muted)]">
           <div className="hidden sm:flex items-center gap-3">
-            <Legend swatch="bg-gradient-to-br from-indigo-500 to-violet-600" label={`${formatPrice(publicPricePerPerson)} pp`} />
-            <Legend swatch="bg-gradient-to-br from-zinc-400 to-zinc-500" label={`${formatPrice(privatePricePerEvent)} flat`} />
+            <Legend swatch="bg-gradient-to-b from-indigo-500 to-indigo-600" label={`${formatPrice(publicPricePerPerson)} pp`} />
+            <Legend swatch="bg-gradient-to-b from-slate-500 to-slate-600" label={`${formatPrice(privatePricePerEvent)} flat`} />
           </div>
           {canBook && emailVerified ? (
             <button type="button" onClick={() => openCreate()} className="btn btn-sm glass-accent">
@@ -137,7 +137,7 @@ export function Schedule({
                 <div
                   className={`text-sm font-semibold leading-tight ${
                     isToday
-                      ? "inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white mt-0.5 shadow-[0_4px_10px_-3px_rgba(67,56,202,0.5)]"
+                      ? "inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white mt-0.5 shadow-[0_3px_8px_-2px_rgba(67,56,202,0.4)]"
                       : ""
                   }`}
                 >
@@ -329,10 +329,10 @@ function DayColumn({
         const height = Math.max((e.durationMinutes / 60) * HOUR_HEIGHT - 2, 18);
         const pending = e.status === "PENDING";
         const blockClasses = pending
-          ? "bg-gradient-to-br from-amber-200/90 to-amber-300/85 text-amber-900 border border-amber-400/65 border-dashed shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_12px_-3px_rgba(180,83,9,0.25)] hover:from-amber-200 hover:to-amber-300"
+          ? "bg-amber-50 text-amber-900 border border-amber-300/70 border-dashed shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_2px_6px_-2px_rgba(180,83,9,0.15)] hover:bg-amber-100"
           : e.isPrivate
-            ? "bg-gradient-to-br from-zinc-400/85 to-zinc-500/90 text-white border border-white/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_6px_14px_-4px_rgba(15,23,42,0.28)] hover:brightness-105"
-            : "bg-gradient-to-br from-indigo-500 to-violet-600 text-white border border-white/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_8px_18px_-5px_rgba(79,70,229,0.5)] hover:brightness-110";
+            ? "bg-gradient-to-b from-slate-500 to-slate-600 text-white border border-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_10px_-3px_rgba(15,23,42,0.25)] hover:brightness-105"
+            : "bg-gradient-to-b from-indigo-500 to-indigo-600 text-white border border-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_6px_14px_-4px_rgba(67,56,202,0.4)] hover:brightness-108";
         const label = pending && !e.title ? "Pending" : e.isPrivate && !e.title ? "Private" : e.title;
         return (
           <button
@@ -465,7 +465,7 @@ function EventDetailDialog({
         className="w-full sm:max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <Glass cornerRadius={28} padding="24px" displacementScale={80} aberrationIntensity={2.4}>
+        <Glass cornerRadius={28} padding="24px">
         <div className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -618,7 +618,7 @@ function CreatedDialog({
       onClick={onClose}
     >
       <div className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-        <Glass cornerRadius={28} padding="24px" displacementScale={75} aberrationIntensity={2.4}>
+        <Glass cornerRadius={28} padding="24px">
         <div className="space-y-3">
         <h2 className="text-lg font-semibold">
           {status === "PENDING" ? "Submitted for approval" : "Event created"}

@@ -98,7 +98,7 @@ export function CreateEventDialog({
         className="w-full sm:max-w-md max-h-[95vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <Glass cornerRadius={28} padding="24px" displacementScale={80} aberrationIntensity={2.4}>
+        <Glass cornerRadius={28} padding="24px">
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold">Host a game</h2>

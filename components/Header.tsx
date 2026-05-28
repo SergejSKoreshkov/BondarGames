@@ -10,15 +10,7 @@ export function Header() {
   const user = data?.user;
   return (
     <header className="sticky top-4 z-30 mx-auto w-full max-w-5xl px-3 sm:px-6 flex justify-center">
-      <Glass
-        cornerRadius={999}
-        padding="6px"
-        displacementScale={60}
-        blurAmount={0.05}
-        saturation={185}
-        aberrationIntensity={1.8}
-        elasticity={0.2}
-      >
+      <Glass cornerRadius={999} padding="6px">
         <div className="flex items-center justify-between gap-1 sm:gap-3 h-12 pr-3">
           <Link
             href="/"
@@ -57,7 +49,7 @@ export function Header() {
 function Logo() {
   return (
     <span aria-hidden className="relative inline-block h-7 w-7 rounded-full overflow-hidden">
-      <span className="absolute inset-0 bg-gradient-to-br from-indigo-400 via-violet-400 to-rose-300" />
+      <span className="absolute inset-0 bg-gradient-to-br from-slate-300 via-indigo-200 to-slate-400" />
       <span className="absolute inset-0 rounded-full ring-1 ring-white/60" />
       <span className="absolute top-1 left-1 h-2.5 w-2.5 rounded-full bg-white/75 blur-[1px]" />
       <span className="absolute bottom-1 right-1.5 h-1 w-1 rounded-full bg-black/15" />

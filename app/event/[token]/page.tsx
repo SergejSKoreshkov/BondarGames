@@ -39,7 +39,7 @@ export default async function PrivateEventPage({
         <h1 className="text-2xl font-semibold tracking-tight">{event.title}</h1>
       </div>
 
-      <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+      <Glass cornerRadius={28} padding="24px">
       <div className="space-y-3">
         <dl className="text-sm grid grid-cols-3 gap-y-2">
           <dt className="text-[var(--muted)] col-span-1">When</dt>

@@ -33,7 +33,7 @@ export function SignUpForm() {
 
   if (done) {
     return (
-      <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+      <Glass cornerRadius={28} padding="24px">
         <div className="text-sm space-y-2">
           <div className="font-medium">Check your inbox</div>
           <p className="text-[var(--muted)]">
@@ -48,7 +48,7 @@ export function SignUpForm() {
   }
 
   return (
-    <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+    <Glass cornerRadius={28} padding="24px">
     <div className="space-y-4">
       <button
         type="button"

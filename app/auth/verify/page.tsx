@@ -37,7 +37,7 @@ export default async function VerifyPage({
 
   return (
     <div className="max-w-sm mx-auto">
-    <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+    <Glass cornerRadius={28} padding="24px">
     <div className="text-sm space-y-3">
       {status === "ok" && (
         <>

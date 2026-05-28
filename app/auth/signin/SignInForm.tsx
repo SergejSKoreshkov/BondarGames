@@ -30,7 +30,7 @@ export function SignInForm() {
   }
 
   return (
-    <Glass cornerRadius={28} padding="24px" displacementScale={70}>
+    <Glass cornerRadius={28} padding="24px">
     <div className="space-y-4">
       <button
         type="button"
