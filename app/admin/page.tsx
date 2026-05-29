@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { getWeeklyHours } from "@/lib/working-hours";
 import { AdminSettingsForm } from "@/components/AdminSettingsForm";
 import { AdminEventsTable, type AdminEvent } from "@/components/AdminEventsTable";
 import { AdminPendingList } from "@/components/AdminPendingList";
+import { AdminWorkingHours } from "@/components/AdminWorkingHours";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,9 @@ export default async function AdminPage() {
   if (!session?.user) redirect("/auth/signin");
   if (session.user.role !== "ADMIN") redirect("/");
 
-  const [events, settings] = await Promise.all([
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const [events, settings, weekly, exceptions] = await Promise.all([
     prisma.event.findMany({
       orderBy: { startsAt: "asc" },
       include: {
@@ -24,7 +28,21 @@ export default async function AdminPage() {
       },
     }),
     getSettings(),
+    getWeeklyHours(),
+    prisma.workingHoursException.findMany({
+      where: { date: { gte: today } },
+      orderBy: { date: "asc" },
+    }),
   ]);
+
+  const exceptionsData = exceptions.map((e) => ({
+    id: e.id,
+    date: e.date.toISOString().slice(0, 10),
+    isClosed: e.isClosed,
+    openMinute: e.openMinute,
+    closeMinute: e.closeMinute,
+    note: e.note,
+  }));
 
   const data: AdminEvent[] = events.map((e) => ({
     id: e.id,
@@ -76,6 +94,11 @@ export default async function AdminPage() {
           initialPublic={settings.publicPricePerPerson}
           initialPrivate={settings.privatePricePerEvent}
         />
+      </section>
+
+      <section className="glass rounded-3xl p-6">
+        <h2 className="text-lg font-semibold mb-4">Working hours</h2>
+        <AdminWorkingHours initialWeekly={weekly} initialExceptions={exceptionsData} />
       </section>
 
       <section className="space-y-3">

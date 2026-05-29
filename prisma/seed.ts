@@ -11,6 +11,16 @@ async function main() {
   });
   console.log("Seeded settings");
 
+  // Default weekly working hours: open 09:00–23:00 every day.
+  for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+    await prisma.workingHours.upsert({
+      where: { dayOfWeek },
+      update: {},
+      create: { dayOfWeek, isClosed: false, openMinute: 540, closeMinute: 1380 },
+    });
+  }
+  console.log("Seeded working hours");
+
   const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
   if (!adminEmail) {
     console.warn("ADMIN_EMAIL not set — skipping admin seed");

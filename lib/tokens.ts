@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
+import { getAppUrl } from "@/lib/app-url";
 
 export async function createVerificationToken(userId: string) {
   const token = randomBytes(32).toString("hex");
@@ -11,6 +12,5 @@ export async function createVerificationToken(userId: string) {
 }
 
 export function verificationLink(token: string) {
-  const base = process.env.APP_URL ?? "http://localhost:3000";
-  return `${base}/auth/verify?token=${token}`;
+  return `${getAppUrl()}/auth/verify?token=${token}`;
 }

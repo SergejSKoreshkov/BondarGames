@@ -26,21 +26,47 @@ export type ScheduleEvent = {
   isMine?: boolean;
 };
 
-const HOUR_HEIGHT = 28; // px per hour; 24 * 28 = 672px total grid
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-/**
- * Schedule columns: 48 px hour-label column + 7 day columns.
- * Day columns have a min width of 96 px — on mobile the grid overflows its
- * container and the parent `overflow-x-auto` makes it horizontally swipable;
- * on desktop the 1fr lets columns expand to fill the available width.
- */
-const GRID_COLS = "48px repeat(7, minmax(96px, 1fr))";
+export type DayHours = { isClosed: boolean; openMinute: number; closeMinute: number };
+type WeeklyHours = Record<number, DayHours>;
+type HoursException = {
+  date: string;
+  isClosed: boolean;
+  openMinute: number;
+  closeMinute: number;
+};
+
+// Desktop: vertical timeline (time = Y axis, days = columns).
+const HOUR_PX_V = 52;
+const TIME_COL_W = 56;
+// Mobile: horizontal timeline (time = X axis, days = rows).
+const HOUR_PX_H = 66;
+const DAY_ROW_H = 58;
+const DAY_LABEL_W = 56;
+
+const DEFAULT_OPEN = 540; // 09:00 — fallback when every visible day is closed
+const DEFAULT_CLOSE = 1380; // 23:00
 
 function fmtTime(d: Date) {
   return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(d);
 }
 function fmtHourLabel(h: number) {
   return `${String(h).padStart(2, "0")}:00`;
+}
+function localDateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
+
+function eventVisual(e: ScheduleEvent) {
+  const pending = e.status === "PENDING";
+  const cls = pending
+    ? "bg-amber-50 text-amber-900 border border-amber-300/70 border-dashed shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_2px_6px_-2px_rgba(180,83,9,0.15)] hover:bg-amber-100"
+    : e.isPrivate
+      ? "bg-gradient-to-b from-slate-500 to-slate-600 text-white border border-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_10px_-3px_rgba(15,23,42,0.25)] hover:brightness-105"
+      : "bg-gradient-to-b from-indigo-500 to-indigo-600 text-white border border-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_6px_14px_-4px_rgba(67,56,202,0.4)] hover:brightness-108";
+  const label = pending && !e.title ? "Pending" : e.isPrivate && !e.title ? "Private" : e.title;
+  return { cls, label };
 }
 
 export function Schedule({
@@ -50,7 +76,8 @@ export function Schedule({
   publicPricePerPerson,
   privatePricePerEvent,
   isAdmin,
-  appUrl,
+  weeklyHours,
+  exceptions,
 }: {
   events: ScheduleEvent[];
   canBook: boolean;
@@ -58,8 +85,24 @@ export function Schedule({
   publicPricePerPerson: number;
   privatePricePerEvent: number;
   isAdmin: boolean;
-  appUrl: string;
+  weeklyHours: WeeklyHours;
+  exceptions: HoursException[];
 }) {
+  const exceptionByDate = useMemo(
+    () => new Map(exceptions.map((e) => [e.date, e])),
+    [exceptions],
+  );
+  const hoursForDay = useMemo(
+    () =>
+      (d: Date): DayHours => {
+        const ex = exceptionByDate.get(localDateKey(d));
+        if (ex) {
+          return { isClosed: ex.isClosed, openMinute: ex.openMinute, closeMinute: ex.closeMinute };
+        }
+        return weeklyHours[d.getDay()] ?? { isClosed: false, openMinute: 0, closeMinute: 1440 };
+      },
+    [exceptionByDate, weeklyHours],
+  );
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [showCreate, setShowCreate] = useState(false);
   const [prefillFrom, setPrefillFrom] = useState<Date | null>(null);
@@ -88,14 +131,50 @@ export function Schedule({
   }
 
   function onCreated(result: { shareToken: string | null; status: "PENDING" | "CONFIRMED" }) {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
     setCreatedResult({
-      shareUrl: result.shareToken ? `${appUrl}/event/${result.shareToken}` : null,
+      shareUrl: result.shareToken ? `${origin}/event/${result.shareToken}` : null,
       status: result.status,
     });
     setShowCreate(false);
   }
 
   const today = new Date();
+
+  // Visible time window = earliest open → latest close across the week's open
+  // days, snapped to whole hours. Hours outside this window are never rendered,
+  // so the scale tracks the configured working hours.
+  const { viewStartMin, viewEndMin } = useMemo(() => {
+    const open: number[] = [];
+    const close: number[] = [];
+    for (const d of days) {
+      const h = hoursForDay(d);
+      if (!h.isClosed) {
+        open.push(h.openMinute);
+        close.push(h.closeMinute);
+      }
+    }
+    const o = open.length ? Math.min(...open) : DEFAULT_OPEN;
+    const c = close.length ? Math.max(...close) : DEFAULT_CLOSE;
+    return {
+      viewStartMin: Math.floor(o / 60) * 60,
+      viewEndMin: Math.ceil(c / 60) * 60,
+    };
+  }, [days, hoursForDay]);
+
+  function handleEmptyClick(day: Date, startMin: number) {
+    if (!(canBook && emailVerified)) return;
+    const h = hoursForDay(day);
+    if (h.isClosed) return;
+    if (startMin < h.openMinute || startMin >= h.closeMinute) return;
+    const from = new Date(day);
+    from.setHours(Math.floor(startMin / 60), startMin % 60, 0, 0);
+    if (from.getTime() < Date.now()) return;
+    openCreate(from);
+  }
+
+  const eventsForDay = (d: Date) =>
+    eventsThisWeek.filter((e) => sameDay(new Date(e.startsAt), d));
 
   return (
     <div className="space-y-4">
@@ -121,82 +200,32 @@ export function Schedule({
         </div>
       </div>
 
-      {/* Week grid — horizontal scroll on narrow screens. */}
       <div className="schedule-surface rounded-3xl overflow-hidden">
-        <div className="overflow-x-auto">
-          {/* Day headers */}
-          <div
-            className="grid border-b border-white/50 text-xs bg-white/30"
-            style={{ gridTemplateColumns: GRID_COLS }}
-          >
-            <div className="sticky left-0 z-20 bg-white/85 backdrop-blur-md border-r border-white/50" />
-            {days.map((d) => {
-              const isToday = sameDay(d, today);
-              return (
-                <div
-                  key={d.toISOString()}
-                  className={`px-1 py-2 text-center ${
-                    isToday ? "text-[var(--foreground)]" : "text-[var(--muted)]"
-                  }`}
-                >
-                  <div className="uppercase tracking-wide text-[10px] sm:text-xs">
-                    {new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(d)}
-                  </div>
-                  <div
-                    className={`text-sm font-semibold leading-tight ${
-                      isToday
-                        ? "inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white mt-0.5 shadow-[0_3px_8px_-2px_rgba(67,56,202,0.4)]"
-                        : ""
-                    }`}
-                  >
-                    {d.getDate()}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Body: hours column + 7 day columns */}
-          <div
-            className="grid relative"
-            style={{
-              gridTemplateColumns: GRID_COLS,
-              height: HOUR_HEIGHT * 24,
-            }}
-          >
-            {/* Time column — sticky left so it remains visible while swiping. */}
-            <div className="sticky left-0 z-20 bg-white/85 backdrop-blur-md border-r border-white/50">
-              {HOURS.map((h) => (
-                <div
-                  key={h}
-                  className="absolute left-0 right-0 text-[10px] text-[var(--muted)] font-mono pr-2 text-right select-none"
-                  style={{ top: h * HOUR_HEIGHT - 6 }}
-                >
-                  {fmtHourLabel(h)}
-                </div>
-              ))}
-            </div>
-
-            {/* Day columns */}
-            {days.map((d, dayIdx) => (
-              <DayColumn
-                key={d.toISOString()}
-                day={d}
-                events={eventsThisWeek.filter((e) => sameDay(new Date(e.startsAt), d))}
-                onEventClick={setActive}
-                onEmptyClick={(hour) => {
-                  if (!(canBook && emailVerified)) return;
-                  const from = new Date(d);
-                  from.setHours(hour, 0, 0, 0);
-                  if (from.getTime() < Date.now()) return;
-                  openCreate(from);
-                }}
-                isLast={dayIdx === 6}
-              />
-            ))}
-
-            <NowLine days={days} />
-          </div>
+        {/* Desktop: vertical timeline (time = rows, days = columns) */}
+        <div className="hidden sm:block">
+          <VerticalGrid
+            days={days}
+            today={today}
+            hoursForDay={hoursForDay}
+            eventsForDay={eventsForDay}
+            viewStartMin={viewStartMin}
+            viewEndMin={viewEndMin}
+            onEmptyClick={handleEmptyClick}
+            onEventClick={setActive}
+          />
+        </div>
+        {/* Mobile: horizontal timeline (time = columns, days = rows) */}
+        <div className="sm:hidden">
+          <HorizontalGrid
+            days={days}
+            today={today}
+            hoursForDay={hoursForDay}
+            eventsForDay={eventsForDay}
+            viewStartMin={viewStartMin}
+            viewEndMin={viewEndMin}
+            onEmptyClick={handleEmptyClick}
+            onEventClick={setActive}
+          />
         </div>
       </div>
 
@@ -302,85 +331,325 @@ function WeekNav({
   );
 }
 
-function DayColumn({
-  day,
-  events,
-  onEventClick,
-  onEmptyClick,
-  isLast,
-}: {
-  day: Date;
-  events: ScheduleEvent[];
+type GridProps = {
+  days: Date[];
+  today: Date;
+  hoursForDay: (d: Date) => DayHours;
+  eventsForDay: (d: Date) => ScheduleEvent[];
+  viewStartMin: number;
+  viewEndMin: number;
+  onEmptyClick: (day: Date, startMin: number) => void;
   onEventClick: (e: ScheduleEvent) => void;
-  onEmptyClick: (hour: number) => void;
-  isLast: boolean;
-}) {
+};
+
+const CLOSED_HATCH =
+  "bg-[repeating-linear-gradient(135deg,rgba(15,23,42,0.06),rgba(15,23,42,0.06)_6px,rgba(15,23,42,0.02)_6px,rgba(15,23,42,0.02)_12px)]";
+
+function hourMarks(viewStartMin: number, viewEndMin: number) {
+  const marks: number[] = [];
+  for (let h = viewStartMin / 60; h <= viewEndMin / 60; h++) marks.push(h);
+  return marks;
+}
+
+function dayHeader(d: Date, today: Date) {
+  const isToday = sameDay(d, today);
+  return { isToday, weekday: new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(d) };
+}
+
+/* ------------------------------- Desktop ------------------------------- */
+
+function VerticalGrid({
+  days,
+  today,
+  hoursForDay,
+  eventsForDay,
+  viewStartMin,
+  viewEndMin,
+  onEmptyClick,
+  onEventClick,
+}: GridProps) {
+  const px = (min: number) => ((min - viewStartMin) / 60) * HOUR_PX_V;
+  const totalH = ((viewEndMin - viewStartMin) / 60) * HOUR_PX_V;
+  const marks = hourMarks(viewStartMin, viewEndMin);
+  const cols = `${TIME_COL_W}px repeat(7, minmax(96px, 1fr))`;
+
   return (
-    <div className={`relative ${isLast ? "" : "border-r border-white/50"}`}>
-      {/* Hour rows (background grid) */}
-      {HOURS.map((h) => (
-        <button
-          key={h}
-          type="button"
-          onClick={() => onEmptyClick(h)}
-          className={`absolute left-0 right-0 hover:bg-white/40 transition-colors ${
-            h === 0 ? "" : "border-t border-white/40"
-          }`}
-          style={{ top: h * HOUR_HEIGHT, height: HOUR_HEIGHT }}
-          aria-label={`${fmtHourLabel(h)} on ${day.toDateString()}`}
-        />
-      ))}
-      {/* Event blocks */}
-      {events.map((e) => {
-        const start = new Date(e.startsAt);
-        const startMinutes = start.getHours() * 60 + start.getMinutes();
-        const top = (startMinutes / 60) * HOUR_HEIGHT;
-        const height = Math.max((e.durationMinutes / 60) * HOUR_HEIGHT - 2, 18);
-        const pending = e.status === "PENDING";
-        const blockClasses = pending
-          ? "bg-amber-50 text-amber-900 border border-amber-300/70 border-dashed shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_2px_6px_-2px_rgba(180,83,9,0.15)] hover:bg-amber-100"
-          : e.isPrivate
-            ? "bg-gradient-to-b from-slate-500 to-slate-600 text-white border border-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_10px_-3px_rgba(15,23,42,0.25)] hover:brightness-105"
-            : "bg-gradient-to-b from-indigo-500 to-indigo-600 text-white border border-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_6px_14px_-4px_rgba(67,56,202,0.4)] hover:brightness-108";
-        const label = pending && !e.title ? "Pending" : e.isPrivate && !e.title ? "Private" : e.title;
-        return (
-          <button
-            type="button"
-            key={e.id}
-            onClick={() => onEventClick(e)}
-            className={`absolute left-1 right-1 rounded-[10px] text-[10px] sm:text-xs px-2 py-1 text-left overflow-hidden transition ${blockClasses}`}
-            style={{ top, height }}
-          >
-            <div className="font-semibold truncate leading-tight">{label}</div>
-            <div className="opacity-85 truncate leading-tight">{fmtTime(start)}</div>
-          </button>
-        );
-      })}
+    <div className="overflow-x-auto">
+      {/* Day headers */}
+      <div className="grid border-b border-white/50 bg-white/30" style={{ gridTemplateColumns: cols }}>
+        <div className="sticky left-0 z-20 bg-white/85 backdrop-blur-md border-r border-white/50" />
+        {days.map((d) => {
+          const { isToday, weekday } = dayHeader(d, today);
+          return (
+            <div
+              key={d.toISOString()}
+              className={`px-1 py-2 text-center ${isToday ? "text-[var(--foreground)]" : "text-[var(--muted)]"}`}
+            >
+              <div className="uppercase tracking-wide text-xs">{weekday}</div>
+              <div
+                className={`text-sm font-semibold leading-tight ${
+                  isToday
+                    ? "inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white mt-0.5 shadow-[0_3px_8px_-2px_rgba(67,56,202,0.4)]"
+                    : ""
+                }`}
+              >
+                {d.getDate()}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Body */}
+      <div className="grid relative" style={{ gridTemplateColumns: cols, height: totalH }}>
+        {/* Time axis */}
+        <div className="sticky left-0 z-20 bg-white/85 backdrop-blur-md border-r border-white/50">
+          {marks.map((h) => (
+            <div
+              key={h}
+              className="absolute left-0 right-0 text-[10px] text-[var(--muted)] font-mono pr-2 text-right select-none"
+              style={{ top: px(h * 60) - 6 }}
+            >
+              {fmtHourLabel(h)}
+            </div>
+          ))}
+        </div>
+
+        {/* Day columns */}
+        {days.map((d, dayIdx) => {
+          const hours = hoursForDay(d);
+          const openFrom = Math.max(hours.openMinute, viewStartMin);
+          const openTo = Math.min(hours.closeMinute, viewEndMin);
+          return (
+            <div
+              key={d.toISOString()}
+              className={`relative ${dayIdx === 6 ? "" : "border-r border-white/50"}`}
+            >
+              {/* Closed shading */}
+              {hours.isClosed ? (
+                <div
+                  aria-hidden
+                  className={`absolute inset-0 pointer-events-none ${CLOSED_HATCH}`}
+                />
+              ) : (
+                <>
+                  {openFrom > viewStartMin && (
+                    <div
+                      aria-hidden
+                      className={`absolute left-0 right-0 pointer-events-none ${CLOSED_HATCH}`}
+                      style={{ top: 0, height: px(openFrom) }}
+                    />
+                  )}
+                  {openTo < viewEndMin && (
+                    <div
+                      aria-hidden
+                      className={`absolute left-0 right-0 pointer-events-none ${CLOSED_HATCH}`}
+                      style={{ top: px(openTo), height: totalH - px(openTo) }}
+                    />
+                  )}
+                </>
+              )}
+              {/* Hour cells */}
+              {marks.slice(0, -1).map((h) => {
+                const startMin = h * 60;
+                const bookable = !hours.isClosed && startMin >= openFrom && startMin < openTo;
+                return (
+                  <button
+                    key={h}
+                    type="button"
+                    onClick={() => onEmptyClick(d, startMin)}
+                    className={`absolute left-0 right-0 transition-colors ${
+                      h === viewStartMin / 60 ? "" : "border-t border-white/40"
+                    } ${bookable ? "hover:bg-white/45 cursor-pointer" : "cursor-default"}`}
+                    style={{ top: px(startMin), height: HOUR_PX_V }}
+                    aria-label={`${fmtHourLabel(h)} ${d.toDateString()}`}
+                    tabIndex={bookable ? 0 : -1}
+                  />
+                );
+              })}
+              {/* Events */}
+              {eventsForDay(d).map((e) => {
+                const start = new Date(e.startsAt);
+                const sMin = start.getHours() * 60 + start.getMinutes();
+                const top = px(sMin);
+                const height = Math.max((e.durationMinutes / 60) * HOUR_PX_V - 2, 18);
+                const { cls, label } = eventVisual(e);
+                return (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => onEventClick(e)}
+                    className={`absolute left-1 right-1 rounded-[10px] text-xs px-2 py-1 text-left overflow-hidden transition z-10 ${cls}`}
+                    style={{ top, height }}
+                  >
+                    <div className="font-semibold truncate leading-tight">{label}</div>
+                    <div className="opacity-85 truncate leading-tight">{fmtTime(start)}</div>
+                  </button>
+                );
+              })}
+              {/* Now line */}
+              {sameDay(d, today) &&
+                (() => {
+                  const nowMin = today.getHours() * 60 + today.getMinutes();
+                  if (nowMin < viewStartMin || nowMin > viewEndMin) return null;
+                  return (
+                    <div className="absolute left-0 right-0 z-20 pointer-events-none" style={{ top: px(nowMin) }}>
+                      <div className="relative h-0">
+                        <div className="absolute left-0 right-0 h-px bg-red-500/80" />
+                        <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500" />
+                      </div>
+                    </div>
+                  );
+                })()}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function NowLine({ days }: { days: Date[] }) {
-  const now = new Date();
-  const today = days.findIndex((d) => sameDay(d, now));
-  if (today === -1) return null;
-  const minutes = now.getHours() * 60 + now.getMinutes();
-  const top = (minutes / 60) * HOUR_HEIGHT;
+/* ------------------------------- Mobile -------------------------------- */
+
+function HorizontalGrid({
+  days,
+  today,
+  hoursForDay,
+  eventsForDay,
+  viewStartMin,
+  viewEndMin,
+  onEmptyClick,
+  onEventClick,
+}: GridProps) {
+  const px = (min: number) => ((min - viewStartMin) / 60) * HOUR_PX_H;
+  const laneW = ((viewEndMin - viewStartMin) / 60) * HOUR_PX_H;
+  const marks = hourMarks(viewStartMin, viewEndMin);
+
   return (
-    <div
-      className="absolute pointer-events-none z-10"
-      style={{
-        gridColumn: `${today + 2} / span 1`,
-        gridRow: "1 / 2",
-        top,
-        left: 0,
-        right: 0,
-        height: 0,
-      }}
-    >
-      <div className="relative h-0">
-        <div className="absolute left-0 right-0 h-px bg-red-500/80" />
-        <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500" />
+    <div className="overflow-x-auto">
+      <div style={{ width: DAY_LABEL_W + laneW }}>
+        {/* Time axis header */}
+        <div className="flex h-8 border-b border-white/50 bg-white/30">
+          <div className="sticky left-0 z-20 shrink-0 bg-white/85 backdrop-blur-md border-r border-white/50" style={{ width: DAY_LABEL_W }} />
+          <div className="relative" style={{ width: laneW }}>
+            {marks.slice(0, -1).map((h) => (
+              <div
+                key={h}
+                className="absolute top-0 bottom-0 flex items-center text-[10px] text-[var(--muted)] font-mono pl-1 select-none border-l border-white/40"
+                style={{ left: px(h * 60) }}
+              >
+                {fmtHourLabel(h)}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Day rows */}
+        {days.map((d) => {
+          const hours = hoursForDay(d);
+          const { isToday, weekday } = dayHeader(d, today);
+          const openFrom = Math.max(hours.openMinute, viewStartMin);
+          const openTo = Math.min(hours.closeMinute, viewEndMin);
+          return (
+            <div key={d.toISOString()} className="flex border-b border-white/40 last:border-b-0" style={{ height: DAY_ROW_H }}>
+              {/* Day label (sticky) */}
+              <div
+                className={`sticky left-0 z-20 shrink-0 bg-white/85 backdrop-blur-md border-r border-white/50 flex flex-col items-center justify-center ${
+                  isToday ? "text-[var(--foreground)]" : "text-[var(--muted)]"
+                }`}
+                style={{ width: DAY_LABEL_W }}
+              >
+                <span className="uppercase text-[10px] tracking-wide">{weekday}</span>
+                <span
+                  className={`text-sm font-semibold leading-tight ${
+                    isToday
+                      ? "inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white shadow-[0_3px_8px_-2px_rgba(67,56,202,0.4)]"
+                      : ""
+                  }`}
+                >
+                  {d.getDate()}
+                </span>
+              </div>
+
+              {/* Lane */}
+              <div className="relative" style={{ width: laneW }}>
+                {/* Closed shading */}
+                {hours.isClosed ? (
+                  <div aria-hidden className={`absolute inset-0 pointer-events-none ${CLOSED_HATCH}`} />
+                ) : (
+                  <>
+                    {openFrom > viewStartMin && (
+                      <div
+                        aria-hidden
+                        className={`absolute top-0 bottom-0 pointer-events-none ${CLOSED_HATCH}`}
+                        style={{ left: 0, width: px(openFrom) }}
+                      />
+                    )}
+                    {openTo < viewEndMin && (
+                      <div
+                        aria-hidden
+                        className={`absolute top-0 bottom-0 pointer-events-none ${CLOSED_HATCH}`}
+                        style={{ left: px(openTo), width: laneW - px(openTo) }}
+                      />
+                    )}
+                  </>
+                )}
+                {/* Hour cells */}
+                {marks.slice(0, -1).map((h) => {
+                  const startMin = h * 60;
+                  const bookable = !hours.isClosed && startMin >= openFrom && startMin < openTo;
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => onEmptyClick(d, startMin)}
+                      className={`absolute top-0 bottom-0 transition-colors ${
+                        h === viewStartMin / 60 ? "" : "border-l border-white/40"
+                      } ${bookable ? "active:bg-white/45" : "cursor-default"}`}
+                      style={{ left: px(startMin), width: HOUR_PX_H }}
+                      aria-label={`${fmtHourLabel(h)} ${d.toDateString()}`}
+                      tabIndex={bookable ? 0 : -1}
+                    />
+                  );
+                })}
+                {/* Events */}
+                {eventsForDay(d).map((e) => {
+                  const start = new Date(e.startsAt);
+                  const sMin = start.getHours() * 60 + start.getMinutes();
+                  const left = px(sMin);
+                  const width = Math.max((e.durationMinutes / 60) * HOUR_PX_H - 2, 36);
+                  const { cls, label } = eventVisual(e);
+                  return (
+                    <button
+                      key={e.id}
+                      type="button"
+                      onClick={() => onEventClick(e)}
+                      className={`absolute top-1 bottom-1 rounded-[10px] text-[11px] px-2 py-1 text-left overflow-hidden transition z-10 ${cls}`}
+                      style={{ left, width }}
+                    >
+                      <div className="font-semibold truncate leading-tight">{label}</div>
+                      <div className="opacity-85 truncate leading-tight">{fmtTime(start)}</div>
+                    </button>
+                  );
+                })}
+                {/* Now line */}
+                {isToday &&
+                  (() => {
+                    const nowMin = today.getHours() * 60 + today.getMinutes();
+                    if (nowMin < viewStartMin || nowMin > viewEndMin) return null;
+                    return (
+                      <div className="absolute top-0 bottom-0 z-20 pointer-events-none" style={{ left: px(nowMin) }}>
+                        <div className="relative w-0 h-full">
+                          <div className="absolute top-0 bottom-0 w-px bg-red-500/80" />
+                          <div className="absolute -top-1 -left-1 h-2 w-2 rounded-full bg-red-500" />
+                        </div>
+                      </div>
+                    );
+                  })()}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

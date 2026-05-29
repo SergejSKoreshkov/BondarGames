@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { validateWithinWorkingHours } from "@/lib/working-hours";
 
 export async function GET() {
   const session = await auth();
@@ -90,6 +91,10 @@ export async function POST(req: Request) {
   }
   if (parsed.data.people > parsed.data.maxPeople) {
     return NextResponse.json({ error: "Your seats exceed max capacity" }, { status: 400 });
+  }
+  const hoursError = await validateWithinWorkingHours(startsAt, parsed.data.durationMinutes);
+  if (hoursError) {
+    return NextResponse.json({ error: hoursError }, { status: 400 });
   }
   const endsAt = new Date(startsAt.getTime() + parsed.data.durationMinutes * 60_000);
   const shareToken = parsed.data.isPrivate ? randomBytes(16).toString("hex") : null;

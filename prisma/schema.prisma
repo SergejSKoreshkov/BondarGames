@@ -95,6 +95,30 @@ model Settings {
   updatedAt             DateTime @updatedAt
 }
 
+// Recurring weekly opening hours. One row per day of week (0 = Sunday .. 6 = Saturday).
+// Minutes are counted from midnight (e.g. 540 = 09:00, 1380 = 23:00).
+model WorkingHours {
+  id          Int      @id @default(autoincrement())
+  dayOfWeek   Int      @unique
+  isClosed    Boolean  @default(false)
+  openMinute  Int      @default(540)
+  closeMinute Int      @default(1380)
+  updatedAt   DateTime @updatedAt
+}
+
+// One-time override for a specific calendar day. Takes precedence over the
+// weekly WorkingHours for that date.
+model WorkingHoursException {
+  id          String   @id @default(cuid())
+  date        DateTime @unique @db.Date
+  isClosed    Boolean  @default(false)
+  openMinute  Int      @default(540)
+  closeMinute Int      @default(1380)
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Reservation {
   id        String   @id @default(cuid())
   eventId   String

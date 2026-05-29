@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { getWeeklyHours } from "@/lib/working-hours";
 import { Schedule, type ScheduleEvent } from "@/components/Schedule";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,9 @@ export default async function Home() {
   const userId = session?.user?.id;
   const isAdmin = session?.user?.role === "ADMIN";
 
-  const [events, settings] = await Promise.all([
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const [events, settings, weekly, exceptions] = await Promise.all([
     prisma.event.findMany({
       where: { startsAt: { gte: new Date() } },
       orderBy: { startsAt: "asc" },
@@ -20,7 +23,19 @@ export default async function Home() {
       },
     }),
     getSettings(),
+    getWeeklyHours(),
+    prisma.workingHoursException.findMany({
+      where: { date: { gte: today } },
+      orderBy: { date: "asc" },
+    }),
   ]);
+
+  const exceptionsData = exceptions.map((e) => ({
+    date: e.date.toISOString().slice(0, 10),
+    isClosed: e.isClosed,
+    openMinute: e.openMinute,
+    closeMinute: e.closeMinute,
+  }));
 
   const data: ScheduleEvent[] = events.map((e) => {
     const isHost = !!(userId && e.createdById === userId);
@@ -63,7 +78,8 @@ export default async function Home() {
         publicPricePerPerson={settings.publicPricePerPerson}
         privatePricePerEvent={settings.privatePricePerEvent}
         isAdmin={isAdmin}
-        appUrl={process.env.APP_URL ?? "http://localhost:3000"}
+        weeklyHours={weekly}
+        exceptions={exceptionsData}
       />
     </div>
   );
