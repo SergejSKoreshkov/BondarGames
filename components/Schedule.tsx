@@ -655,6 +655,36 @@ function HorizontalGrid({
   );
 }
 
+function InviteLink({ token }: { token: string }) {
+  const [copied, setCopied] = useState(false);
+  const url =
+    typeof window !== "undefined" ? `${window.location.origin}/event/${token}` : `/event/${token}`;
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  }
+  return (
+    <div className="glass-soft rounded-2xl p-3 space-y-1.5">
+      <div className="text-xs font-medium text-[var(--muted)]">Invite link</div>
+      <div className="flex items-center gap-2">
+        <input
+          readOnly
+          value={url}
+          onFocus={(e) => e.currentTarget.select()}
+          className="field flex-1 text-xs"
+          style={{ height: 36 }}
+        />
+        <button type="button" onClick={copy} className="btn btn-sm glass-accent">
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function EventDetailDialog({
   event,
   onClose,
@@ -818,6 +848,9 @@ function EventDetailDialog({
                   : `${formatPrice(publicPricePerPerson)} / person`}
               </dd>
             </dl>
+            {event.isPrivate && event.shareToken && (
+              <InviteLink token={event.shareToken} />
+            )}
           </>
         )}
 

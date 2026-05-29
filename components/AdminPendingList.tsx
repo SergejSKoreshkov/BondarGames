@@ -70,12 +70,28 @@ function PendingRow({ event }: { event: AdminEvent }) {
         <div className="text-sm text-[var(--foreground)]/70">
           {event.gameName} · {durationHours}h{durationMins ? ` ${durationMins}m` : ""} ·{" "}
           {event.maxPeople} max
-          {event.location ? ` · ${event.location}` : ""} · requested by{" "}
-          {event.createdBy.name ?? event.createdBy.email}
+          {event.location ? ` · ${event.location}` : ""}
+        </div>
+        <div className="text-xs text-[var(--foreground)]/70 mt-1">
+          Host: <span className="text-[var(--foreground)]/90">{event.createdBy.name ?? "—"}</span>{" "}
+          <a
+            href={`mailto:${event.createdBy.email}`}
+            className="text-indigo-700 hover:underline break-all"
+          >
+            {event.createdBy.email}
+          </a>
         </div>
         {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
       </div>
       <div className="flex items-center gap-2 shrink-0">
+        <a
+          href={`mailto:${event.createdBy.email}?subject=${encodeURIComponent(
+            `BondarGames — ${event.title}`,
+          )}`}
+          className="btn btn-sm glass glass-hover"
+        >
+          Contact host
+        </a>
         <button type="button" onClick={reject} disabled={busy} className="btn btn-sm glass-danger">
           Reject
         </button>

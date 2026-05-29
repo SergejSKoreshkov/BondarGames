@@ -137,6 +137,7 @@ export function CreateEventDialog({
           <Field label="Starts" full>
             <input
               type="datetime-local"
+              step={900}
               className="field"
               required
               value={startsAt}
@@ -146,7 +147,7 @@ export function CreateEventDialog({
           <Field label="Duration (hh:mm)" full>
             <input
               type="time"
-              step={300}
+              step={900}
               className="field"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}

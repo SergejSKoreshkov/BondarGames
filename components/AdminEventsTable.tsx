@@ -106,11 +106,27 @@ function AdminEventRow({
           <div className="font-semibold mt-0.5">{event.title}</div>
           <div className="text-sm text-[var(--muted)]">
             {event.gameName} · {event.seatsTaken}/{event.maxPeople} seats · {priceLabel}
-            {event.location ? ` · ${event.location}` : ""} · hosted by{" "}
-            {event.createdBy.name ?? event.createdBy.email}
+            {event.location ? ` · ${event.location}` : ""}
+          </div>
+          <div className="text-xs text-[var(--muted)] mt-1">
+            Host: <span className="text-[var(--foreground)]/80">{event.createdBy.name ?? "—"}</span>{" "}
+            <a
+              href={`mailto:${event.createdBy.email}`}
+              className="text-indigo-600 hover:underline break-all"
+            >
+              {event.createdBy.email}
+            </a>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <a
+            href={`mailto:${event.createdBy.email}?subject=${encodeURIComponent(
+              `BondarGames — ${event.title}`,
+            )}`}
+            className="btn btn-sm glass glass-hover"
+          >
+            Contact host
+          </a>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}

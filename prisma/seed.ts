@@ -21,6 +21,20 @@ async function main() {
   }
   console.log("Seeded working hours");
 
+  // Non-admin test user.
+  await prisma.user.upsert({
+    where: { email: "test@bondargames.com" },
+    update: {},
+    create: {
+      email: "test@bondargames.com",
+      name: "Test User",
+      passwordHash: await bcrypt.hash("Test1234!", 12),
+      role: "USER",
+      emailVerified: new Date(),
+    },
+  });
+  console.log("Seeded test user test@bondargames.com (password: Test1234!)");
+
   const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
   if (!adminEmail) {
     console.warn("ADMIN_EMAIL not set — skipping admin seed");

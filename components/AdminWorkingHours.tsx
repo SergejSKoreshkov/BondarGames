@@ -109,7 +109,7 @@ function WeeklyEditor({ initial }: { initial: Weekly }) {
                 <div className="flex items-center gap-2 text-sm">
                   <input
                     type="time"
-                    step={300}
+                    step={900}
                     value={toTime(day.openMinute)}
                     onChange={(e) => update(d, { openMinute: toMinutes(e.target.value) })}
                     className="field"
@@ -118,7 +118,7 @@ function WeeklyEditor({ initial }: { initial: Weekly }) {
                   <span className="text-[var(--muted)]">–</span>
                   <input
                     type="time"
-                    step={300}
+                    step={900}
                     value={toTime(day.closeMinute)}
                     onChange={(e) => update(d, { closeMinute: toMinutes(e.target.value) })}
                     className="field"
@@ -229,7 +229,7 @@ function ExceptionsEditor({ initial }: { initial: Exception[] }) {
               <span className="block text-xs font-medium text-[var(--muted)] mb-1">Open</span>
               <input
                 type="time"
-                step={300}
+                step={900}
                 value={open}
                 onChange={(e) => setOpen(e.target.value)}
                 className="field"
@@ -239,7 +239,7 @@ function ExceptionsEditor({ initial }: { initial: Exception[] }) {
               <span className="block text-xs font-medium text-[var(--muted)] mb-1">Close</span>
               <input
                 type="time"
-                step={300}
+                step={900}
                 value={close}
                 onChange={(e) => setClose(e.target.value)}
                 className="field"
