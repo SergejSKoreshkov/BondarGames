@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { snapMinutes } from "@/lib/time";
 
 function serialize(e: {
   id: string;
@@ -53,7 +54,9 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
-  const { date, isClosed, openMinute, closeMinute, note } = parsed.data;
+  const { date, isClosed, note } = parsed.data;
+  const openMinute = snapMinutes(parsed.data.openMinute);
+  const closeMinute = snapMinutes(parsed.data.closeMinute);
   if (!isClosed && closeMinute <= openMinute) {
     return NextResponse.json(
       { error: "Closing time must be after opening time." },

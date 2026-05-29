@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { validateWithinWorkingHours } from "@/lib/working-hours";
+import { snapMinutes } from "@/lib/time";
 
 export async function GET() {
   const session = await auth();
@@ -85,18 +86,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid input", issues: parsed.error.flatten() }, { status: 400 });
   }
 
+  // Enforce 15-minute granularity on both start time and duration.
   const startsAt = new Date(parsed.data.startsAt);
+  startsAt.setSeconds(0, 0);
+  startsAt.setMinutes(snapMinutes(startsAt.getMinutes()));
+  const durationMinutes = Math.max(snapMinutes(parsed.data.durationMinutes), 15);
+
   if (startsAt.getTime() <= Date.now()) {
     return NextResponse.json({ error: "Event must start in the future" }, { status: 400 });
   }
   if (parsed.data.people > parsed.data.maxPeople) {
     return NextResponse.json({ error: "Your seats exceed max capacity" }, { status: 400 });
   }
-  const hoursError = await validateWithinWorkingHours(startsAt, parsed.data.durationMinutes);
+  const hoursError = await validateWithinWorkingHours(startsAt, durationMinutes);
   if (hoursError) {
     return NextResponse.json({ error: hoursError }, { status: 400 });
   }
-  const endsAt = new Date(startsAt.getTime() + parsed.data.durationMinutes * 60_000);
+  const endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000);
   const shareToken = parsed.data.isPrivate ? randomBytes(16).toString("hex") : null;
 
   try {
@@ -116,7 +122,7 @@ export async function POST(req: Request) {
           description: parsed.data.description ?? null,
           gameName: parsed.data.gameName,
           startsAt,
-          durationMinutes: parsed.data.durationMinutes,
+          durationMinutes,
           maxPeople: parsed.data.maxPeople,
           location: parsed.data.location ?? null,
           isPrivate: parsed.data.isPrivate,

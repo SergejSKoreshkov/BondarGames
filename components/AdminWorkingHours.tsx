@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { snapMinutes } from "@/lib/time";
+import { DatePicker } from "@/components/DatePicker";
+import { TimePicker } from "@/components/TimePicker";
 
 type DayHours = { isClosed: boolean; openMinute: number; closeMinute: number };
 type Weekly = Record<number, DayHours>;
@@ -23,7 +26,7 @@ function toTime(min: number) {
 }
 function toMinutes(time: string) {
   const [h, m] = time.split(":").map((n) => parseInt(n, 10) || 0);
-  return h * 60 + m;
+  return snapMinutes(h * 60 + m);
 }
 
 export function AdminWorkingHours({
@@ -107,22 +110,16 @@ function WeeklyEditor({ initial }: { initial: Weekly }) {
               </label>
               {!day.isClosed ? (
                 <div className="flex items-center gap-2 text-sm">
-                  <input
-                    type="time"
-                    step={900}
+                  <TimePicker
                     value={toTime(day.openMinute)}
-                    onChange={(e) => update(d, { openMinute: toMinutes(e.target.value) })}
-                    className="field"
-                    style={{ width: "auto", height: 36 }}
+                    onChange={(v) => update(d, { openMinute: toMinutes(v) })}
+                    ariaLabel={`${DAY_NAMES[d]} open`}
                   />
                   <span className="text-[var(--muted)]">–</span>
-                  <input
-                    type="time"
-                    step={900}
+                  <TimePicker
                     value={toTime(day.closeMinute)}
-                    onChange={(e) => update(d, { closeMinute: toMinutes(e.target.value) })}
-                    className="field"
-                    style={{ width: "auto", height: 36 }}
+                    onChange={(v) => update(d, { closeMinute: toMinutes(v) })}
+                    ariaLabel={`${DAY_NAMES[d]} close`}
                   />
                 </div>
               ) : (
@@ -189,8 +186,6 @@ function ExceptionsEditor({ initial }: { initial: Exception[] }) {
     }
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold">One-time overrides</h3>
@@ -205,14 +200,7 @@ function ExceptionsEditor({ initial }: { initial: Exception[] }) {
       >
         <label className="block col-span-2 sm:col-span-1">
           <span className="block text-xs font-medium text-[var(--muted)] mb-1">Date</span>
-          <input
-            type="date"
-            min={todayStr}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            className="field"
-          />
+          <DatePicker value={date} onChange={setDate} min={new Date()} />
         </label>
         <label className="flex items-center gap-2 text-xs text-[var(--muted)] h-[42px]">
           <input
@@ -227,23 +215,11 @@ function ExceptionsEditor({ initial }: { initial: Exception[] }) {
           <>
             <label className="block">
               <span className="block text-xs font-medium text-[var(--muted)] mb-1">Open</span>
-              <input
-                type="time"
-                step={900}
-                value={open}
-                onChange={(e) => setOpen(e.target.value)}
-                className="field"
-              />
+              <TimePicker value={open} onChange={setOpen} ariaLabel="Override open" />
             </label>
             <label className="block">
               <span className="block text-xs font-medium text-[var(--muted)] mb-1">Close</span>
-              <input
-                type="time"
-                step={900}
-                value={close}
-                onChange={(e) => setClose(e.target.value)}
-                className="field"
-              />
+              <TimePicker value={close} onChange={setClose} ariaLabel="Override close" />
             </label>
           </>
         )}

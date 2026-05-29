@@ -3,11 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/format";
+import { snapTime } from "@/lib/time";
 import { Glass } from "@/components/Glass";
+import { DatePicker } from "@/components/DatePicker";
+import { TimePicker } from "@/components/TimePicker";
 
-function toLocalInputValue(d: Date) {
-  const tzOffset = d.getTimezoneOffset() * 60_000;
-  return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+function dateValue(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
+function timeValue(d: Date) {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 export function CreateEventDialog({
@@ -24,11 +31,15 @@ export function CreateEventDialog({
   privatePricePerEvent: number;
 }) {
   const router = useRouter();
-  const initialStart = prefillStart ?? new Date(Date.now() + 60 * 60_000);
   const [title, setTitle] = useState("");
   const [gameName, setGameName] = useState("");
   const [description, setDescription] = useState("");
-  const [startsAt, setStartsAt] = useState(toLocalInputValue(initialStart));
+  const [startDate, setStartDate] = useState(() =>
+    dateValue(prefillStart ?? new Date(Date.now() + 60 * 60_000)),
+  );
+  const [startTime, setStartTime] = useState(() =>
+    snapTime(timeValue(prefillStart ?? new Date(Date.now() + 60 * 60_000))),
+  );
   const [duration, setDuration] = useState("02:00");
   const [maxPeople, setMaxPeople] = useState(6);
   const [people, setPeople] = useState(1);
@@ -45,9 +56,15 @@ export function CreateEventDialog({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const [dh, dm] = duration.split(":").map((n) => parseInt(n, 10) || 0);
+  const [dh, dm] = snapTime(duration).split(":").map((n) => parseInt(n, 10) || 0);
   const durationMinutes = dh * 60 + dm;
   const cost = isPrivate ? privatePricePerEvent : publicPricePerPerson * people;
+
+  function startsAtISO() {
+    const [y, mo, d] = startDate.split("-").map((n) => parseInt(n, 10));
+    const [hh, mm] = snapTime(startTime).split(":").map((n) => parseInt(n, 10));
+    return new Date(y, mo - 1, d, hh, mm, 0, 0).toISOString();
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,7 +81,7 @@ export function CreateEventDialog({
         title,
         gameName,
         description: description || null,
-        startsAt: new Date(startsAt).toISOString(),
+        startsAt: startsAtISO(),
         durationMinutes,
         maxPeople: Number(maxPeople),
         location: location || null,
@@ -91,11 +108,11 @@ export function CreateEventDialog({
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-slate-900/15 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-40 bg-slate-900/15 backdrop-blur-[2px] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md max-h-[95vh] overflow-y-auto"
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <Glass cornerRadius={28} padding="24px">
@@ -134,24 +151,14 @@ export function CreateEventDialog({
               onChange={(e) => setGameName(e.target.value)}
             />
           </Field>
-          <Field label="Starts" full>
-            <input
-              type="datetime-local"
-              step={900}
-              className="field"
-              required
-              value={startsAt}
-              onChange={(e) => setStartsAt(e.target.value)}
-            />
+          <Field label="Date" full>
+            <DatePicker value={startDate} onChange={setStartDate} min={new Date()} />
           </Field>
-          <Field label="Duration (hh:mm)" full>
-            <input
-              type="time"
-              step={900}
-              className="field"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-            />
+          <Field label="Start time">
+            <TimePicker value={startTime} onChange={setStartTime} ariaLabel="Start time" />
+          </Field>
+          <Field label="Duration">
+            <TimePicker value={duration} onChange={setDuration} maxHour={12} ariaLabel="Duration" />
           </Field>
           <Field label="Max people">
             <input

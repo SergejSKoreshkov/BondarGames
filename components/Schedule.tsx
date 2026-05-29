@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/format";
 import { addDays, isoDateInputValue, sameDay, startOfWeek } from "@/lib/week";
 import { CreateEventDialog } from "@/components/CreateEventDialog";
 import { Glass } from "@/components/Glass";
+import { InviteLink } from "@/components/InviteLink";
 
 export type ScheduleEvent = {
   id: string;
@@ -655,36 +656,6 @@ function HorizontalGrid({
   );
 }
 
-function InviteLink({ token }: { token: string }) {
-  const [copied, setCopied] = useState(false);
-  const url =
-    typeof window !== "undefined" ? `${window.location.origin}/event/${token}` : `/event/${token}`;
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {}
-  }
-  return (
-    <div className="glass-soft rounded-2xl p-3 space-y-1.5">
-      <div className="text-xs font-medium text-[var(--muted)]">Invite link</div>
-      <div className="flex items-center gap-2">
-        <input
-          readOnly
-          value={url}
-          onFocus={(e) => e.currentTarget.select()}
-          className="field flex-1 text-xs"
-          style={{ height: 36 }}
-        />
-        <button type="button" onClick={copy} className="btn btn-sm glass-accent">
-          {copied ? "Copied" : "Copy"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function EventDetailDialog({
   event,
   onClose,
@@ -766,11 +737,11 @@ function EventDetailDialog({
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-slate-900/15 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-40 bg-slate-900/15 backdrop-blur-[2px] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md"
+        className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <Glass cornerRadius={28} padding="24px">

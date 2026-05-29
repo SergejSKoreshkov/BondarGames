@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDate, formatPrice } from "@/lib/format";
+import { InviteLink } from "@/components/InviteLink";
 
 export type AdminEvent = {
   id: string;
@@ -14,6 +15,7 @@ export type AdminEvent = {
   location: string | null;
   isPrivate: boolean;
   status: "PENDING" | "CONFIRMED";
+  shareToken: string | null;
   createdBy: { name: string | null; email: string };
   seatsTaken: number;
   reservations: { id: string; people: number; user: { name: string | null; email: string } }[];
@@ -140,7 +142,10 @@ function AdminEventRow({
         </div>
       </div>
       {open && (
-        <div className="mt-4 border-t border-white/40 pt-4">
+        <div className="mt-4 border-t border-white/40 pt-4 space-y-4">
+          {event.isPrivate && event.shareToken && (
+            <InviteLink token={event.shareToken} />
+          )}
           {event.reservations.length === 0 ? (
             <div className="text-sm text-[var(--muted)]">No bookings yet.</div>
           ) : (

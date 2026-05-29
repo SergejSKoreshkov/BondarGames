@@ -54,6 +54,7 @@ export default async function AdminPage() {
     location: e.location,
     isPrivate: e.isPrivate,
     status: e.status,
+    shareToken: e.shareToken,
     createdBy: e.createdBy,
     reservations: e.reservations.map((r) => ({
       id: r.id,

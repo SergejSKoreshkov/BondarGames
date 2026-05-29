@@ -19,19 +19,25 @@ export default async function ProfilePage() {
     getSettings(),
   ]);
 
-  const data = reservations.map((r) => ({
-    id: r.id,
-    people: r.people,
-    event: {
-      id: r.event.id,
-      title: r.event.title,
-      gameName: r.event.gameName,
-      startsAt: r.event.startsAt.toISOString(),
-      location: r.event.location,
-      isPrivate: r.event.isPrivate,
-      status: r.event.status,
-    },
-  }));
+  const isAdmin = session.user.role === "ADMIN";
+  const data = reservations.map((r) => {
+    const isHost = r.event.createdById === session.user.id;
+    return {
+      id: r.id,
+      people: r.people,
+      event: {
+        id: r.event.id,
+        title: r.event.title,
+        gameName: r.event.gameName,
+        startsAt: r.event.startsAt.toISOString(),
+        location: r.event.location,
+        isPrivate: r.event.isPrivate,
+        status: r.event.status,
+        // Host (and admins) can retrieve the invite link from their bookings.
+        shareToken: r.event.isPrivate && (isHost || isAdmin) ? r.event.shareToken : null,
+      },
+    };
+  });
 
   return (
     <div className="space-y-8">

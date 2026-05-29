@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getWeeklyHours } from "@/lib/working-hours";
+import { snapMinutes } from "@/lib/time";
 
 export async function GET() {
   const weekly = await getWeeklyHours();
@@ -28,7 +29,12 @@ export async function PUT(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
-  for (const d of parsed.data.days) {
+  const days = parsed.data.days.map((d) => ({
+    ...d,
+    openMinute: snapMinutes(d.openMinute),
+    closeMinute: snapMinutes(d.closeMinute),
+  }));
+  for (const d of days) {
     if (!d.isClosed && d.closeMinute <= d.openMinute) {
       return NextResponse.json(
         { error: "Closing time must be after opening time." },
@@ -37,7 +43,7 @@ export async function PUT(req: Request) {
     }
   }
   await prisma.$transaction(
-    parsed.data.days.map((d) =>
+    days.map((d) =>
       prisma.workingHours.upsert({
         where: { dayOfWeek: d.dayOfWeek },
         update: { isClosed: d.isClosed, openMinute: d.openMinute, closeMinute: d.closeMinute },

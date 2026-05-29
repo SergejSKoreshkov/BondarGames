@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDate, formatPrice } from "@/lib/format";
+import { InviteLink } from "@/components/InviteLink";
 
 type Reservation = {
   id: string;
@@ -15,6 +16,7 @@ type Reservation = {
     location: string | null;
     isPrivate: boolean;
     status: "PENDING" | "CONFIRMED";
+    shareToken: string | null;
   };
 };
 
@@ -84,44 +86,47 @@ function Row({
   }
 
   return (
-    <li className="glass rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-          <span>{formatDate(r.event.startsAt)}</span>
-          {r.event.isPrivate && (
-            <span className="glass-soft inline-flex h-5 px-2 items-center rounded-full text-zinc-700 text-[10px] font-medium uppercase tracking-wide">
-              Private
-            </span>
-          )}
-          {r.event.status === "PENDING" && (
-            <span className="glass-warn inline-flex h-5 px-2 items-center rounded-full text-[10px] font-medium uppercase tracking-wide">
-              Pending
-            </span>
-          )}
+    <li className="glass rounded-3xl p-5 space-y-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+            <span>{formatDate(r.event.startsAt)}</span>
+            {r.event.isPrivate && (
+              <span className="glass-soft inline-flex h-5 px-2 items-center rounded-full text-zinc-700 text-[10px] font-medium uppercase tracking-wide">
+                Private
+              </span>
+            )}
+            {r.event.status === "PENDING" && (
+              <span className="glass-warn inline-flex h-5 px-2 items-center rounded-full text-[10px] font-medium uppercase tracking-wide">
+                Pending
+              </span>
+            )}
+          </div>
+          <div className="font-semibold mt-0.5">{r.event.title}</div>
+          <div className="text-sm text-[var(--muted)]">
+            {r.event.gameName} · {r.people} {r.people === 1 ? "seat" : "seats"} · {formatPrice(total)}
+            {r.event.isPrivate && " flat"}
+          </div>
+          {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
         </div>
-        <div className="font-semibold mt-0.5">{r.event.title}</div>
-        <div className="text-sm text-[var(--muted)]">
-          {r.event.gameName} · {r.people} {r.people === 1 ? "seat" : "seats"} · {formatPrice(total)}
-          {r.event.isPrivate && " flat"}
-        </div>
-        {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
+        {past ? (
+          <span className="text-xs text-[var(--muted)]">Past</span>
+        ) : cancellable ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={cancel}
+            className="btn btn-sm glass glass-hover self-start sm:self-auto"
+          >
+            {busy ? "…" : "Cancel"}
+          </button>
+        ) : (
+          <span className="text-xs text-amber-700 sm:max-w-[120px] sm:text-right">
+            Within 24h — cancellation closed
+          </span>
+        )}
       </div>
-      {past ? (
-        <span className="text-xs text-[var(--muted)]">Past</span>
-      ) : cancellable ? (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={cancel}
-          className="btn btn-sm glass glass-hover self-start sm:self-auto"
-        >
-          {busy ? "…" : "Cancel"}
-        </button>
-      ) : (
-        <span className="text-xs text-amber-700 sm:max-w-[120px] sm:text-right">
-          Within 24h — cancellation closed
-        </span>
-      )}
+      {r.event.shareToken && <InviteLink token={r.event.shareToken} />}
     </li>
   );
 }
